@@ -1,0 +1,27 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Campaigns</h1><% if (user.role === 'admin') { %><a class="btn btn-primary" href="/campaigns/new">New campaign</a><% } %></div>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Name</th><th>Key</th><th>Source</th><th>Status</th><th class="num">Offers</th><th class="num">Clicks today</th><th class="num">Conv. today</th><th class="num">Revenue today</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="9" class="muted">No campaigns yet. Create a traffic source and an offer first, then a campaign.</td></tr><% } %>
+  <% for (const c of rows) { const s = stats.get(c.id) || {}; const src = sourceMap.get(c.sourceId); %>
+    <tr>
+      <td><a href="/campaigns/<%= c.id %>"><%= c.name %></a></td>
+      <td><code><%= c.key %></code></td>
+      <td><%= src ? src.name : '—' %></td>
+      <td><span class="badge badge-<%= c.status %>"><%= c.status %></span></td>
+      <td class="num"><%= (c.offers || []).length %></td>
+      <td class="num"><%= num(s.clicks || 0) %></td>
+      <td class="num"><%= num(s.conversions || 0) %></td>
+      <td class="num"><%= money(s.revenue || 0) %></td>
+      <td class="actions">
+        <a class="btn btn-sm" href="/campaigns/<%= c.id %>">Open</a>
+        <% if (user.role === 'admin') { %><a class="btn btn-sm" href="/campaigns/<%= c.id %>/edit">Edit</a><% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/foot') %>

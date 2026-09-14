@@ -1,0 +1,39 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head">
+  <h1>Postback logs <% if (trigger) { %><span class="muted">· <%= trigger.name %></span><% } %><% if (baseQuery.clickId) { %><span class="muted">· click <code><%= baseQuery.clickId %></code></span><% } %></h1>
+  <div><% if (trigger || baseQuery.clickId) { %><a class="btn" href="/triggers/logs">All logs</a><% } %> <a class="btn" href="/triggers">Triggers</a></div>
+</div>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Time</th><th>Trigger</th><th>Click</th><th class="num">Attempt</th><th>Result</th><th>Request</th><th class="num">ms</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="8" class="muted">No postbacks fired yet.</td></tr><% } %>
+  <% for (const l of rows) { %>
+    <tr>
+      <td class="muted" style="white-space:nowrap"><%= dt(l.createdAt) %></td>
+      <td><a href="/triggers/logs?triggerId=<%= l.triggerId %>"><%= l.triggerName %></a> <span class="badge"><%= l.event %></span></td>
+      <td><a href="/triggers/logs?clickId=<%= l.clickId %>"><code><%= trunc(l.clickId, 14) %></code></a></td>
+      <td class="num"><%= l.attempt %></td>
+      <td><% if (l.ok) { %><span class="badge badge-ok">HTTP <%= l.statusCode %></span><% } else { %><span class="badge badge-fail"><%= l.statusCode ? 'HTTP ' + l.statusCode : l.error %></span><% } %></td>
+      <td>
+        <details><summary><code><%= l.method %></code> <span class="muted"><%= trunc(l.url, 60) %></span></summary>
+          <pre class="small"><%= l.url %><% if (l.body) { %>
+
+<%= l.body %><% } %><% if (l.response) { %>
+
+--- response ---
+<%= l.response %><% } %><% if (l.error) { %>
+
+--- error ---
+<%= l.error %><% } %></pre>
+        </details>
+      </td>
+      <td class="num"><%= l.durationMs %></td>
+      <td class="actions"><% if (user.role === 'admin') { %><form method="post" action="/postback-logs/<%= l.id %>/retry" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm">Retry</button></form><% } %></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/pagination', { nextAfter, baseQuery }) %>
+<%- include('../partials/foot') %>

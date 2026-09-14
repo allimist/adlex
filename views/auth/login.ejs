@@ -1,0 +1,11 @@
+<%- include('../partials/head', { title }) %>
+<div class="login-card">
+  <h1><%= appName %></h1>
+  <form method="post" action="/login" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Email <input type="email" name="email" value="<%= email %>" required autofocus></label>
+    <label>Password <input type="password" name="password" required></label>
+    <button class="btn btn-primary">Log in</button>
+  </form>
+</div>
+<%- include('../partials/foot') %>

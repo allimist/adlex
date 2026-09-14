@@ -1,0 +1,19 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= title %></h1><a class="btn" href="/offers">Back</a></div>
+<form method="post" action="<%= isNew ? '/offers' : '/offers/' + item.id %>" class="form card">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="row">
+    <label>Name <input type="text" name="name" value="<%= item.name || '' %>" required maxlength="80"></label>
+    <label>Affiliate network <input type="text" name="network" value="<%= item.network || '' %>" maxlength="80"></label>
+  </div>
+  <label>Offer URL <input type="url" name="url" value="<%= item.url || '' %>" required placeholder="https://network.example/offer?s1={clickid}&s2={sub1}">
+    <span class="hint">Put <code>{clickid}</code> where the network expects its click/sub id so postbacks can be matched.</span></label>
+  <%- include('../partials/macros-legend', { macroList }) %>
+  <div class="row" style="margin-top:12px">
+    <label>Default payout <input type="number" step="0.01" min="0" name="payout" value="<%= item.payout || 0 %>"><span class="hint">Used when the postback carries no payout.</span></label>
+    <label>Currency <input type="text" name="currency" value="<%= item.currency || 'USD' %>" maxlength="3"></label>
+    <label>Status <select name="status"><% for (const s of statuses) { %><option value="<%= s %>" <%= item.status === s ? 'selected' : '' %>><%= s %></option><% } %></select></label>
+  </div>
+  <button class="btn btn-primary"><%= isNew ? 'Create offer' : 'Save changes' %></button>
+</form>
+<%- include('../partials/foot') %>

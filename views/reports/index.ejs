@@ -1,0 +1,46 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head">
+  <h1>Reports</h1>
+  <div class="presets">
+    <% for (const [key, label] of groups) { %>
+      <a class="chip <%= group === key ? 'active' : '' %>" href="<%= qs('/reports', { group: key, preset: range.preset === 'custom' ? '' : range.preset, from: range.preset === 'custom' ? range.fromDay : '', to: range.preset === 'custom' ? range.toDay : '' }) %>"><%= label %></a>
+    <% } %>
+  </div>
+</div>
+<%- include('../partials/daterange', { range, presets, extra: { group } }) %>
+<div class="stat-row">
+  <div class="stat"><div class="lbl">Clicks</div><div class="val"><%= num(total.clicks) %></div></div>
+  <div class="stat"><div class="lbl">Conversions</div><div class="val"><%= num(total.conversions) %></div></div>
+  <div class="stat"><div class="lbl">CR</div><div class="val"><%= pct(total.cr) %></div></div>
+  <div class="stat"><div class="lbl">Revenue</div><div class="val"><%= money(total.revenue) %></div></div>
+  <div class="stat"><div class="lbl">Cost</div><div class="val"><%= money(total.cost) %></div></div>
+  <div class="stat"><div class="lbl">Profit</div><div class="val <%= total.profit >= 0 ? 'pos' : 'neg' %>"><%= money(total.profit) %></div></div>
+  <div class="stat"><div class="lbl">ROI</div><div class="val <%= total.roi >= 0 ? 'pos' : 'neg' %>"><%= pct(total.roi) %></div></div>
+</div>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Name</th><th class="num">Clicks</th><th class="num">Uniques</th><th class="num">Conv.</th><th class="num">CR</th><th class="num">Revenue</th><th class="num">Cost</th><th class="num">Profit</th><th class="num">ROI</th><th class="num">EPC</th><th class="num">CPC</th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="11" class="muted">No traffic in this range.</td></tr><% } %>
+  <% for (const r of rows) { const e = names.get(r.key); %>
+    <tr>
+      <td><% if (e) { %><a href="<%= entityBase + r.key %>"><%= e.name %></a><% } else { %><span class="muted">(deleted <%= r.key || 'none' %>)</span><% } %></td>
+      <td class="num"><%= num(r.clicks) %></td>
+      <td class="num"><%= num(r.uniques) %></td>
+      <td class="num"><%= num(r.conversions) %></td>
+      <td class="num"><%= pct(r.cr) %></td>
+      <td class="num"><%= money(r.revenue) %></td>
+      <td class="num"><%= money(r.cost) %></td>
+      <td class="num <%= r.profit >= 0 ? 'pos' : 'neg' %>"><%= money(r.profit) %></td>
+      <td class="num"><%= pct(r.roi) %></td>
+      <td class="num"><%= money(r.epc, 3) %></td>
+      <td class="num"><%= money(r.cpc, 4) %></td>
+    </tr>
+  <% } %>
+  <% if (rows.length > 1) { %>
+    <tr class="total"><td>Total</td><td class="num"><%= num(total.clicks) %></td><td class="num"><%= num(total.uniques) %></td><td class="num"><%= num(total.conversions) %></td><td class="num"><%= pct(total.cr) %></td><td class="num"><%= money(total.revenue) %></td><td class="num"><%= money(total.cost) %></td><td class="num"><%= money(total.profit) %></td><td class="num"><%= pct(total.roi) %></td><td class="num"><%= money(total.epc, 3) %></td><td class="num"><%= money(total.cpc, 4) %></td></tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/foot') %>

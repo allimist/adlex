@@ -1,0 +1,9 @@
+<details class="legend">
+  <summary>Available macros</summary>
+  <div class="macros">
+    <% for (const [name, desc] of macroList) { %>
+      <code title="<%= desc %>">{<%= name %>}</code>
+    <% } %>
+  </div>
+  <p class="muted">Unknown macros render as empty strings. Values are URL-encoded automatically.</p>
+</details>

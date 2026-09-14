@@ -1,0 +1,34 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Traffic sources</h1>
+  <% if (user.role === 'admin') { %><div>
+    <a class="btn" href="/sources/new?preset=propellerads">+ PropellerAds</a>
+    <a class="btn" href="/sources/new?preset=facebook">+ Facebook</a>
+    <a class="btn btn-primary" href="/sources/new">New source</a>
+  </div><% } %>
+</div>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Name</th><th>Cost model</th><th>Click id param</th><th>Status</th><th class="num">Clicks today</th><th class="num">Cost today</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="7" class="muted">No traffic sources yet.</td></tr><% } %>
+  <% for (const s of rows) { const st = stats.get(s.id) || {}; %>
+    <tr>
+      <td><a href="/sources/<%= s.id %>/edit"><%= s.name %></a></td>
+      <td><code><%= s.costModel %></code></td>
+      <td><code><%= s.params && s.params.clickid ? s.params.clickid.name : 'clickid' %></code></td>
+      <td><span class="badge badge-<%= s.status %>"><%= s.status %></span></td>
+      <td class="num"><%= num(st.clicks || 0) %></td>
+      <td class="num"><%= money(st.cost || 0) %></td>
+      <td class="actions">
+        <a class="btn btn-sm" href="/triggers?sourceId=<%= s.id %>">Triggers</a>
+        <% if (user.role === 'admin') { %>
+          <a class="btn btn-sm" href="/sources/<%= s.id %>/edit">Edit</a>
+          <form method="post" action="/sources/<%= s.id %>/delete" class="inline js-confirm" data-confirm="Delete source <%= s.name %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-danger">Delete</button></form>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/foot') %>

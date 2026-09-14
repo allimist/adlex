@@ -1,0 +1,28 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Offers</h1><% if (user.role === 'admin') { %><a class="btn btn-primary" href="/offers/new">New offer</a><% } %></div>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Name</th><th>Network</th><th>URL</th><th class="num">Payout</th><th>Status</th><th class="num">Clicks today</th><th class="num">Conv. today</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="8" class="muted">No offers yet.</td></tr><% } %>
+  <% for (const o of rows) { const s = stats.get(o.id) || {}; %>
+    <tr>
+      <td><a href="/offers/<%= o.id %>/edit"><%= o.name %></a></td>
+      <td><%= o.network %></td>
+      <td><span class="muted" title="<%= o.url %>"><%= trunc(o.url, 50) %></span></td>
+      <td class="num"><%= money(o.payout) %> <%= o.currency %></td>
+      <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+      <td class="num"><%= num(s.clicks || 0) %></td>
+      <td class="num"><%= num(s.conversions || 0) %></td>
+      <td class="actions">
+        <% if (user.role === 'admin') { %>
+          <a class="btn btn-sm" href="/offers/<%= o.id %>/edit">Edit</a>
+          <form method="post" action="/offers/<%= o.id %>/delete" class="inline js-confirm" data-confirm="Delete offer <%= o.name %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-danger">Delete</button></form>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,38 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Conversions</h1></div>
+<form method="get" class="filters" action="/conversions">
+  <input type="hidden" name="preset" value="<%= range.preset === 'custom' ? '' : range.preset %>">
+  <% if (range.preset === 'custom') { %><input type="hidden" name="from" value="<%= range.fromDay %>"><input type="hidden" name="to" value="<%= range.toDay %>"><% } %>
+  <label>Campaign
+    <select name="campaignId"><option value="">All</option><% for (const c of campaignList) { %><option value="<%= c.id %>" <%= filter.campaignId === c.id ? 'selected' : '' %>><%= c.name %></option><% } %></select>
+  </label>
+  <label>Offer
+    <select name="offerId"><option value="">All</option><% for (const o of offerList) { %><option value="<%= o.id %>" <%= filter.offerId === o.id ? 'selected' : '' %>><%= o.name %></option><% } %></select>
+  </label>
+  <button class="btn">Filter</button>
+</form>
+<%- include('../partials/daterange', { range, presets, extra: filter }) %>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Time</th><th>Click time</th><th>Campaign</th><th>Offer</th><th>Status</th><th class="num">Payout</th><th>Tx id</th><th>External id</th><th>Click id</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="10" class="muted">No conversions in this range.</td></tr><% } %>
+  <% for (const v of rows) { const camp = campaignMap.get(v.campaignId); const off = offerMap.get(v.offerId); %>
+    <tr>
+      <td class="muted" style="white-space:nowrap"><%= dt(v.createdAt) %></td>
+      <td class="muted" style="white-space:nowrap"><%= dt(v.clickCreatedAt) %></td>
+      <td><% if (camp) { %><a href="/campaigns/<%= camp.id %>"><%= camp.name %></a><% } else { %><span class="muted">(deleted)</span><% } %></td>
+      <td><%= off ? off.name : '—' %></td>
+      <td><span class="badge <%= ['rejected','refund','chargeback','cancelled','canceled'].includes(v.status) ? 'badge-fail' : 'badge-ok' %>"><%= v.status %></span></td>
+      <td class="num"><%= money(v.payout) %></td>
+      <td><code><%= trunc(v.txid, 20) %></code></td>
+      <td><code><%= trunc(v.externalId, 20) %></code></td>
+      <td><code title="<%= v.clickId %>"><%= trunc(v.clickId, 14) %></code></td>
+      <td class="actions"><a class="btn btn-sm" href="/triggers/logs?clickId=<%= v.clickId %>">Postbacks</a></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/pagination', { nextAfter, baseQuery }) %>
+<%- include('../partials/foot') %>

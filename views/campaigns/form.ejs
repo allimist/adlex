@@ -1,0 +1,65 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= title %></h1><a class="btn" href="<%= isNew ? '/campaigns' : '/campaigns/' + item.id %>">Back</a></div>
+<form method="post" action="<%= isNew ? '/campaigns' : '/campaigns/' + item.id %>" class="form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="card">
+    <div class="row">
+      <label>Name <input type="text" name="name" value="<%= item.name || '' %>" required maxlength="80"></label>
+      <label>Traffic source
+        <select name="sourceId" required>
+          <option value="">— select —</option>
+          <% for (const s of sourceList) { %><option value="<%= s.id %>" <%= item.sourceId === s.id ? 'selected' : '' %>><%= s.name %></option><% } %>
+        </select>
+        <% if (sourceList.length === 0) { %><span class="hint">No traffic sources yet. <a href="/sources/new">Create one</a>.</span><% } %>
+      </label>
+      <label>Status
+        <select name="status"><% for (const s of statuses) { %><option value="<%= s %>" <%= item.status === s ? 'selected' : '' %>><%= s %></option><% } %></select>
+      </label>
+    </div>
+    <div class="row">
+      <label>Cost per click <input type="number" step="0.0001" min="0" name="costPerClick" value="<%= item.costPerClick || 0 %>">
+        <span class="hint">Used when the source cost model is "fixed", or as fallback when the cost param is missing.</span></label>
+      <label>Fallback URL <input type="url" name="fallbackUrl" value="<%= item.fallbackUrl || '' %>" placeholder="https://…">
+        <span class="hint">Where to send traffic when the campaign is paused or no offer is active.</span></label>
+    </div>
+    <label class="check"><input type="checkbox" name="requireToken" value="1" <%= item.postbackToken ? 'checked' : '' %>> Require a secret token on incoming postbacks</label>
+  </div>
+
+  <div class="card rows-editor">
+    <h2>Offers &amp; rotation weights</h2>
+    <% if (offerList.length === 0) { %><p class="muted">No offers yet. <a href="/offers/new">Create one</a>.</p><% } %>
+    <div class="rows">
+      <% for (const o of (item.offers && item.offers.length ? item.offers : [{ offerId: '', weight: 100 }])) { %>
+        <div class="row-item">
+          <select name="offerId">
+            <option value="">— select offer —</option>
+            <% for (const off of offerList) { %><option value="<%= off.id %>" <%= o.offerId === off.id ? 'selected' : '' %>><%= off.name %> (<%= money(off.payout) %>)</option><% } %>
+          </select>
+          <input type="number" name="weight" min="0" max="1000" value="<%= o.weight %>" title="Weight">
+          <button type="button" class="btn btn-sm js-remove-row">Remove</button>
+        </div>
+      <% } %>
+    </div>
+    <template>
+      <div class="row-item">
+        <select name="offerId">
+          <option value="">— select offer —</option>
+          <% for (const off of offerList) { %><option value="<%= off.id %>"><%= off.name %> (<%= money(off.payout) %>)</option><% } %>
+        </select>
+        <input type="number" name="weight" min="0" max="1000" value="100" title="Weight">
+        <button type="button" class="btn btn-sm js-remove-row">Remove</button>
+      </div>
+    </template>
+    <button type="button" class="btn btn-sm js-add-row">+ Add offer</button>
+    <p class="muted">Traffic is split proportionally to weights among active offers.</p>
+  </div>
+
+  <button class="btn btn-primary"><%= isNew ? 'Create campaign' : 'Save changes' %></button>
+</form>
+<% if (!isNew) { %>
+<form method="post" action="/campaigns/<%= item.id %>/delete" class="js-confirm" data-confirm="Delete this campaign? Click history is kept but unlinked." style="margin-top:12px">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <button class="btn btn-danger">Delete campaign</button>
+</form>
+<% } %>
+<%- include('../partials/foot') %>

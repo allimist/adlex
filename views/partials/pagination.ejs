@@ -1,0 +1,9 @@
+<% /* expects: nextAfter (string|null), baseQuery (object) */ %>
+<div class="pager">
+  <% if (Object.keys(baseQuery).some(k => k === 'after' && baseQuery.after)) { %>
+    <a class="btn" href="<%= qs(currentPath, { ...baseQuery, after: '' }) %>">« Newest</a>
+  <% } %>
+  <% if (nextAfter) { %>
+    <a class="btn" href="<%= qs(currentPath, { ...baseQuery, after: nextAfter }) %>">Older »</a>
+  <% } %>
+</div>

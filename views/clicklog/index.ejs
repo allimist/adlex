@@ -1,0 +1,39 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Clicklog</h1></div>
+<form method="get" class="filters" action="/clicklog">
+  <input type="hidden" name="preset" value="<%= range.preset === 'custom' ? '' : range.preset %>">
+  <% if (range.preset === 'custom') { %><input type="hidden" name="from" value="<%= range.fromDay %>"><input type="hidden" name="to" value="<%= range.toDay %>"><% } %>
+  <label>Campaign
+    <select name="campaignId"><option value="">All</option><% for (const c of campaignList) { %><option value="<%= c.id %>" <%= filter.campaignId === c.id ? 'selected' : '' %>><%= c.name %></option><% } %></select>
+  </label>
+  <label>Converted
+    <select name="converted"><option value="">Any</option><option value="1" <%= filter.converted === '1' ? 'selected' : '' %>>Yes</option><option value="0" <%= filter.converted === '0' ? 'selected' : '' %>>No</option></select>
+  </label>
+  <button class="btn">Filter</button>
+</form>
+<%- include('../partials/daterange', { range, presets, extra: filter }) %>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Time</th><th>Click id</th><th>Campaign</th><th>Offer</th><th>External id</th><th>Subs</th><th>IP</th><th>Country</th><th class="num">Cost</th><th>Conv.</th><th class="num">Revenue</th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="11" class="muted">No clicks in this range.</td></tr><% } %>
+  <% for (const c of rows) { const camp = campaignMap.get(c.campaignId); const off = offerMap.get(c.offerId); %>
+    <tr>
+      <td class="muted" style="white-space:nowrap"><%= dt(c.createdAt) %></td>
+      <td><code title="<%= c.id %>"><%= trunc(c.id, 14) %></code></td>
+      <td><% if (camp) { %><a href="/campaigns/<%= camp.id %>"><%= camp.name %></a><% } else { %><span class="muted"><%= c.campaignKey %></span><% } %></td>
+      <td><%= off ? off.name : '—' %></td>
+      <td><code><%= trunc(c.externalId, 24) %></code></td>
+      <td class="muted" title="<%= [c.sub1,c.sub2,c.sub3,c.sub4,c.sub5].join(' | ') %>"><%= trunc([c.sub1,c.sub2,c.sub3,c.sub4,c.sub5].filter(Boolean).join(' | '), 40) %></td>
+      <td><%= c.ip %></td>
+      <td><%= c.country || '' %></td>
+      <td class="num"><%= money(c.cost, 4) %></td>
+      <td><% if (c.converted) { %><a href="/conversions?campaignId=<%= c.campaignId %>&preset=all" class="badge badge-ok">yes</a><% } else { %><span class="muted">—</span><% } %></td>
+      <td class="num"><%= money(c.revenue) %></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/pagination', { nextAfter, baseQuery }) %>
+<%- include('../partials/foot') %>

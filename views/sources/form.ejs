@@ -1,0 +1,55 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= title %></h1><a class="btn" href="/sources">Back</a></div>
+<form method="post" action="<%= isNew ? '/sources' : '/sources/' + item.id %>" class="form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="card">
+    <div class="row">
+      <label>Name <input type="text" name="name" value="<%= item.name || '' %>" required maxlength="80"></label>
+      <label>Preset
+        <select class="js-preset" data-presets='<%- JSON.stringify(presets).replace(/'/g, "&#39;") %>'>
+          <option value="">— apply a preset —</option>
+          <% for (const [k, p] of Object.entries(presets)) { %><option value="<%= k %>"><%= p.label %></option><% } %>
+        </select>
+        <span class="hint">Fills the parameter mapping below.</span>
+      </label>
+      <label>Cost model
+        <select name="costModel"><% for (const [k, label] of costModels) { %><option value="<%= k %>" <%= item.costModel === k ? 'selected' : '' %>><%= label %></option><% } %></select>
+      </label>
+      <label>Status
+        <select name="status"><% for (const s of statuses) { %><option value="<%= s %>" <%= item.status === s ? 'selected' : '' %>><%= s %></option><% } %></select>
+      </label>
+    </div>
+  </div>
+
+  <div class="card rows-editor params">
+    <h2>Parameter mapping</h2>
+    <p class="muted">For each field: the query parameter name we read on <code>/click</code>, and the traffic source's macro/token used to build the campaign URL.</p>
+    <div class="row-item" style="font-size:12px;color:var(--muted)"><span>Field</span><span>Query param name</span><span>Source token</span><span></span></div>
+    <% for (const k of paramKeys) { const p = (item.params && item.params[k]) || { name: k, token: '' }; %>
+      <div class="row-item">
+        <strong><%= k %></strong>
+        <input type="text" name="param_name_<%= k %>" value="<%= p.name %>" placeholder="<%= k %>">
+        <input type="text" name="param_token_<%= k %>" value="<%= p.token %>" placeholder="e.g. ${SUBID} or {{ad.id}}">
+        <span></span>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <label>Notes <textarea name="notes"><%= item.notes || '' %></textarea></label>
+  </div>
+  <button class="btn btn-primary"><%= isNew ? 'Create source' : 'Save changes' %></button>
+</form>
+
+<% if (!isNew) { %>
+<div class="card" style="margin-top:16px">
+  <div class="page-head"><h2>Postback triggers for this source</h2><a class="btn btn-sm" href="/triggers/new?sourceId=<%= item.id %>">+ Add trigger</a></div>
+  <% if (triggers.length === 0) { %><p class="muted">No triggers. Add one to notify this source when a conversion arrives.</p><% } %>
+  <ul>
+    <% for (const t of triggers) { %>
+      <li><a href="/triggers/<%= t.id %>/edit"><%= t.name %></a> <span class="badge"><%= t.event %></span> <%= t.campaignId ? '<span class="badge">campaign override</span>' : '' %> <%= t.enabled ? '' : '<span class="badge badge-fail">disabled</span>' %> <span class="muted"><%= trunc(t.url, 70) %></span></li>
+    <% } %>
+  </ul>
+</div>
+<% } %>
+<%- include('../partials/foot') %>

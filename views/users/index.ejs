@@ -1,0 +1,25 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Users</h1><a class="btn btn-primary" href="/users/new">New user</a></div>
+<table class="table">
+  <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th>Last login</th><th></th></tr></thead>
+  <tbody>
+  <% for (const u of rows) { %>
+    <tr class="<%= u.disabled ? 'muted' : '' %>">
+      <td><%= u.email %></td>
+      <td><%= u.name %></td>
+      <td><span class="badge"><%= u.role %></span></td>
+      <td><%= u.disabled ? 'disabled' : 'active' %></td>
+      <td><%= dt(u.lastLoginAt) || '—' %></td>
+      <td class="actions">
+        <a class="btn btn-sm" href="/users/<%= u.id %>/edit">Edit</a>
+        <% if (u.disabled) { %>
+          <form method="post" action="/users/<%= u.id %>/enable" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm">Enable</button></form>
+        <% } else if (u.id !== user.id) { %>
+          <form method="post" action="/users/<%= u.id %>/disable" class="inline js-confirm" data-confirm="Disable <%= u.email %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-danger">Disable</button></form>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+<%- include('../partials/foot') %>

@@ -1,0 +1,12 @@
+<header class="topbar">
+  <a class="brand" href="/reports"><%= appName %></a>
+  <nav class="tabs">
+    <% for (const [href, label, role] of nav) { if (role && user.role !== role) continue; %>
+      <a href="<%= href %>" class="<%= currentPath === href || currentPath.startsWith(href + '/') ? 'active' : '' %>"><%= label %></a>
+    <% } %>
+  </nav>
+  <div class="who">
+    <span title="<%= user.role %>"><%= user.name || user.email %> <small class="badge"><%= user.role %></small></span>
+    <form method="post" action="/logout" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-link">Log out</button></form>
+  </div>
+</header>

@@ -1,0 +1,40 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Triggers <span class="muted">(outgoing postbacks)</span></h1>
+  <div><a class="btn" href="/triggers/logs">Logs</a> <% if (user.role === 'admin') { %><a class="btn btn-primary" href="/triggers/new">New trigger</a><% } %></div>
+</div>
+<form method="get" class="filters" action="/triggers">
+  <label>Traffic source
+    <select name="sourceId" onchange="this.form.submit()">
+      <option value="">All</option>
+      <% for (const s of sourceList) { %><option value="<%= s.id %>" <%= filter.sourceId === s.id ? 'selected' : '' %>><%= s.name %></option><% } %>
+    </select>
+  </label>
+</form>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Name</th><th>Source</th><th>Scope</th><th>Event</th><th>Statuses</th><th>Request</th><th>Enabled</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="8" class="muted">No triggers. A trigger fires an HTTP request to your traffic source (or any URL) when a conversion arrives.</td></tr><% } %>
+  <% for (const t of rows) { const s = sourceMap.get(t.sourceId); const c = t.campaignId ? campaignMap.get(t.campaignId) : null; %>
+    <tr>
+      <td><a href="/triggers/<%= t.id %>/edit"><%= t.name %></a></td>
+      <td><%= s ? s.name : '(deleted)' %></td>
+      <td><% if (t.campaignId) { %><span class="badge">campaign</span> <%= c ? c.name : '(deleted)' %><% } else { %><span class="badge">source default</span><% } %></td>
+      <td><%= t.event %></td>
+      <td><%= t.statuses && t.statuses.length ? t.statuses.join(', ') : 'all' %></td>
+      <td><code><%= t.method %></code> <span class="muted" title="<%= t.url %>"><%= trunc(t.url, 50) %></span></td>
+      <td><%= t.enabled ? '<span class="badge badge-ok">on</span>' : '<span class="badge badge-fail">off</span>' %></td>
+      <td class="actions">
+        <a class="btn btn-sm" href="/triggers/logs?triggerId=<%= t.id %>">Logs</a>
+        <% if (user.role === 'admin') { %>
+          <form method="post" action="/triggers/<%= t.id %>/test" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm">Test</button></form>
+          <a class="btn btn-sm" href="/triggers/<%= t.id %>/edit">Edit</a>
+          <form method="post" action="/triggers/<%= t.id %>/delete" class="inline js-confirm" data-confirm="Delete trigger <%= t.name %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-danger">Delete</button></form>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,48 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= title %></h1><a class="btn" href="/triggers">Back</a></div>
+<form method="post" action="<%= isNew ? '/triggers' : '/triggers/' + item.id %>" class="form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="card">
+    <div class="row">
+      <label>Name <input type="text" name="name" value="<%= item.name || '' %>" required maxlength="80"></label>
+      <label>Traffic source
+        <select name="sourceId" required>
+          <option value="">— select —</option>
+          <% for (const s of sourceList) { %><option value="<%= s.id %>" <%= item.sourceId === s.id ? 'selected' : '' %>><%= s.name %></option><% } %>
+        </select>
+      </label>
+      <label>Campaign (optional override)
+        <select name="campaignId">
+          <option value="">— all campaigns of this source —</option>
+          <% for (const c of campaignList) { %><option value="<%= c.id %>" <%= item.campaignId === c.id ? 'selected' : '' %>><%= c.name %></option><% } %>
+        </select>
+        <span class="hint">If a campaign has its own trigger for an event, source-level triggers for that event are skipped for it.</span>
+      </label>
+    </div>
+    <div class="row">
+      <label>Event
+        <select name="event"><% for (const e of events) { %><option value="<%= e %>" <%= item.event === e ? 'selected' : '' %>><%= e %></option><% } %></select>
+        <span class="hint">"click" fires on every click. Use sparingly.</span>
+      </label>
+      <label>Only for statuses <input type="text" name="statuses" value="<%= (item.statuses || []).join(', ') %>" placeholder="empty = all (e.g. sale, lead)"></label>
+      <label class="check" style="margin-top:22px"><input type="checkbox" name="enabled" value="1" <%= item.enabled ? 'checked' : '' %>> Enabled</label>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row">
+      <label>Method <select name="method"><% for (const m of methods) { %><option value="<%= m %>" <%= item.method === m ? 'selected' : '' %>><%= m %></option><% } %></select></label>
+      <label>Timeout (ms) <input type="number" name="timeoutMs" min="500" max="30000" value="<%= item.timeoutMs || 5000 %>"></label>
+      <label>Retries <input type="number" name="retries" min="0" max="5" value="<%= item.retries ?? 2 %>"><span class="hint">On timeout, network error, 5xx or 429. Backoff 2 s then 10 s.</span></label>
+    </div>
+    <label>URL <input type="url" name="url" value="<%= item.url || '' %>" required placeholder="https://source.example/postback?cid={external_id}&payout={payout}&status={status}"></label>
+    <div class="js-body-fields">
+      <div class="row">
+        <label>Body type <select name="bodyType"><% for (const b of bodyTypes) { %><option value="<%= b %>" <%= item.bodyType === b ? 'selected' : '' %>><%= b %></option><% } %></select></label>
+      </div>
+      <label>Body template <textarea name="body" placeholder='form: cid={external_id}&payout={payout}   json: {"cid":"{external_id}","payout":"{payout}"}'><%= item.body || '' %></textarea></label>
+    </div>
+    <%- include('../partials/macros-legend', { macroList }) %>
+  </div>
+  <button class="btn btn-primary"><%= isNew ? 'Create trigger' : 'Save changes' %></button>
+</form>
+<%- include('../partials/foot') %>

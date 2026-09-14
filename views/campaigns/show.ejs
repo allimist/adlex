@@ -1,0 +1,70 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head">
+  <h1><%= item.name %> <span class="badge badge-<%= item.status %>"><%= item.status %></span></h1>
+  <div>
+    <a class="btn" href="/clicklog?campaignId=<%= item.id %>&preset=7d">Clicklog</a>
+    <a class="btn" href="/conversions?campaignId=<%= item.id %>&preset=30d">Conversions</a>
+    <% if (user.role === 'admin') { %><a class="btn btn-primary" href="/campaigns/<%= item.id %>/edit">Edit</a><% } %>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Campaign URL <span class="muted">(paste into <%= source ? source.name : 'your traffic source' %>)</span></h2>
+  <div class="copy-row"><input type="text" id="clickUrl" value="<%= clickUrl %>" readonly><button type="button" class="btn js-copy" data-target="#clickUrl">Copy</button></div>
+  <h2 style="margin-top:14px">Postback URL <span class="muted">(give to the affiliate network; replace macros with theirs)</span></h2>
+  <div class="copy-row"><input type="text" id="pbUrl" value="<%= postbackUrl %>" readonly><button type="button" class="btn js-copy" data-target="#pbUrl">Copy</button></div>
+  <% if (item.postbackToken && user.role === 'admin') { %>
+    <form method="post" action="/campaigns/<%= item.id %>/regenerate-token" class="inline js-confirm" data-confirm="Regenerate token? Networks using the old URL will get 403." style="margin-top:8px">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm">Regenerate token</button>
+    </form>
+  <% } %>
+</div>
+
+<div class="stat-row">
+  <div class="stat"><div class="lbl">Clicks (7d)</div><div class="val"><%= num(stats.clicks) %></div></div>
+  <div class="stat"><div class="lbl">Conversions</div><div class="val"><%= num(stats.conversions) %></div></div>
+  <div class="stat"><div class="lbl">CR</div><div class="val"><%= pct(stats.cr) %></div></div>
+  <div class="stat"><div class="lbl">Revenue</div><div class="val"><%= money(stats.revenue) %></div></div>
+  <div class="stat"><div class="lbl">Cost</div><div class="val"><%= money(stats.cost) %></div></div>
+  <div class="stat"><div class="lbl">Profit</div><div class="val <%= stats.profit >= 0 ? 'pos' : 'neg' %>"><%= money(stats.profit) %></div></div>
+  <div class="stat"><div class="lbl">ROI</div><div class="val"><%= pct(stats.roi) %></div></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h2>Offers (last 7 days)</h2>
+    <table class="table">
+      <thead><tr><th>Offer</th><th class="num">Weight</th><th class="num">Clicks</th><th class="num">Conv.</th><th class="num">Revenue</th></tr></thead>
+      <tbody>
+      <% for (const o of item.offers) { const off = offerMap.get(o.offerId); const s = offerStats.get(o.offerId) || {}; %>
+        <tr>
+          <td><% if (off) { %><a href="/offers/<%= off.id %>/edit"><%= off.name %></a> <span class="badge badge-<%= off.status %>"><%= off.status %></span><% } else { %><span class="muted">(deleted)</span><% } %></td>
+          <td class="num"><%= o.weight %></td>
+          <td class="num"><%= num(s.clicks || 0) %></td>
+          <td class="num"><%= num(s.conversions || 0) %></td>
+          <td class="num"><%= money(s.revenue || 0) %></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>Details</h2>
+    <dl class="kv">
+      <dt>Key</dt><dd><code><%= item.key %></code></dd>
+      <dt>Traffic source</dt><dd><% if (source) { %><a href="/sources/<%= source.id %>/edit"><%= source.name %></a> · cost model <code><%= source.costModel %></code><% } else { %><span class="muted">(deleted)</span><% } %></dd>
+      <dt>Cost per click</dt><dd><%= money(item.costPerClick, 4) %></dd>
+      <dt>Fallback URL</dt><dd><%= item.fallbackUrl || '—' %></dd>
+      <dt>Postback token</dt><dd><%= item.postbackToken ? 'required' : 'not required' %></dd>
+      <dt>Created</dt><dd><%= dt(item.createdAt) %></dd>
+    </dl>
+    <h2 style="margin-top:16px">Triggers in effect</h2>
+    <% if (triggers.length === 0) { %><p class="muted">None. <a href="/triggers/new?sourceId=<%= item.sourceId %>&campaignId=<%= item.id %>">Add a postback trigger</a>.</p><% } %>
+    <ul>
+      <% for (const t of triggers) { %>
+        <li><a href="/triggers/<%= t.id %>/edit"><%= t.name %></a> <span class="badge"><%= t.event %></span> <span class="badge"><%= t.campaignId ? 'campaign override' : 'source default' %></span> <code><%= t.method %></code> <span class="muted"><%= trunc(t.url, 60) %></span></li>
+      <% } %>
+    </ul>
+  </div>
+</div>
+<%- include('../partials/foot') %>

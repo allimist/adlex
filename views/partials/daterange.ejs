@@ -1,0 +1,12 @@
+<% /* expects: range ({preset, fromDay, toDay}), extra (object of other query params to keep), presets */ %>
+<form method="get" class="filters" action="<%= currentPath %>">
+  <% for (const [k, v] of Object.entries(extra || {})) { if (v) { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% } } %>
+  <div class="presets">
+    <% for (const [key, label] of presets) { %>
+      <a class="chip <%= range.preset === key ? 'active' : '' %>" href="<%= qs(currentPath, { ...(extra || {}), preset: key }) %>"><%= label %></a>
+    <% } %>
+  </div>
+  <label>From <input type="date" name="from" value="<%= range.fromDay %>"></label>
+  <label>To <input type="date" name="to" value="<%= range.toDay %>"></label>
+  <button class="btn">Apply</button>
+</form>

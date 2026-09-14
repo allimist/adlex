@@ -1,0 +1,21 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= title %></h1><a class="btn" href="/users">Back</a></div>
+<form method="post" action="<%= isNew ? '/users' : '/users/' + item.id %>" class="form card">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label>Email <input type="email" name="email" value="<%= item.email %>" required></label>
+  <label>Name <input type="text" name="name" value="<%= item.name || '' %>"></label>
+  <label>Role
+    <select name="role"><% for (const r of roles) { %><option value="<%= r %>" <%= item.role === r ? 'selected' : '' %>><%= r %></option><% } %></select>
+  </label>
+  <% if (isNew) { %><label>Password <input type="password" name="password" minlength="8" required></label><% } %>
+  <button class="btn btn-primary"><%= isNew ? 'Create' : 'Save' %></button>
+</form>
+<% if (!isNew) { %>
+<form method="post" action="/users/<%= item.id %>/password" class="form card">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <h2>Reset password</h2>
+  <label>New password <input type="password" name="password" minlength="8" required></label>
+  <button class="btn">Set password</button>
+</form>
+<% } %>
+<%- include('../partials/foot') %>
