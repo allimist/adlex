@@ -1,0 +1,24 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Offline conversion exports</h1><% if (user.role === 'admin') { %><a class="btn btn-primary" href="/exports/new">New export</a><% } %></div>
+<p class="muted">CSV files of conversions for Google Ads / Microsoft Advertising offline conversion imports (or any custom layout). Each export has a secret URL for the platform's scheduled import.</p>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Name</th><th>Platform</th><th>Window</th><th>Payout</th><th>Status</th><th>Last fetched</th><th class="num">Rows</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="8" class="muted">No exports yet.</td></tr><% } %>
+  <% for (const e of rows) { %>
+    <tr>
+      <td><a href="/exports/<%= e.id %>"><%= e.name %></a></td>
+      <td><%= platforms[e.platform] ? platforms[e.platform].label : e.platform %></td>
+      <td><%= e.windowType === 'monthly' ? (e.month === 'current' ? 'Current month' : 'Previous month') : `Last ${e.windowDays} day(s)` %></td>
+      <td><%= e.includePayout ? 'yes' : 'no' %></td>
+      <td><span class="badge <%= e.enabled ? 'badge-ok' : 'badge-archived' %>"><%= e.enabled ? 'enabled' : 'disabled' %></span></td>
+      <td class="muted"><%= dt(e.lastFetchedAt) || '—' %></td>
+      <td class="num"><%= e.lastRows === undefined ? '—' : num(e.lastRows) %></td>
+      <td class="actions"><a class="btn btn-sm" href="/exports/<%= e.id %>/download">Download</a></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/foot') %>

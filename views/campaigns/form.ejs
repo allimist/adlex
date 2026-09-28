@@ -23,6 +23,8 @@
         <span class="hint">Where to send traffic when the campaign is paused or no offer is active.</span></label>
     </div>
     <label class="check"><input type="checkbox" name="requireToken" value="1" <%= item.postbackToken ? 'checked' : '' %>> Require a secret token on incoming postbacks</label>
+    <label class="check"><input type="checkbox" name="allowLp" value="1" <%= item.allowLp ? 'checked' : '' %>> Allow <code>?lp=</code> landing override
+      <span class="hint">One campaign for many pages: visitors go to the <code>lp</code> URL (e.g. <code>{lpurl}</code> from a Bing tracking template) instead of the offer URL, if its domain is listed under Sites. Other domains fall back to the offer URL.</span></label>
   </div>
 
   <div class="card rows-editor">

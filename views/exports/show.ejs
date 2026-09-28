@@ -1,0 +1,42 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= item.name %></h1>
+  <div>
+    <a class="btn" href="/exports/<%= item.id %>/download">Download CSV</a>
+    <% if (user.role === 'admin') { %><a class="btn" href="/exports/<%= item.id %>/edit">Edit</a><% } %>
+    <a class="btn" href="/exports">Back</a>
+  </div>
+</div>
+<div class="card">
+  <dl class="kv">
+    <dt>Platform</dt><dd><%= platforms[item.platform].label %> <%= item.enabled ? '' : '<span class="badge badge-archived">disabled</span>' %></dd>
+    <dt>Conversion name</dt><dd><%= item.conversionName || '—' %></dd>
+    <dt>Window</dt><dd><%= item.windowType === 'monthly' ? (item.month === 'current' ? 'Current month to date' : 'Previous month') : `Last ${item.windowDays} day(s)` %> · now: <%= dt(range.from) %> → <%= dt(Math.min(range.to, Date.now())) %> UTC</dd>
+    <dt>Payout</dt><dd><%= item.includePayout ? `included (${item.currency})` : 'not included' %></dd>
+    <dt>Time zone</dt><dd><%= item.utcOffset %></dd>
+    <dt>Basic auth</dt><dd><%= item.authUser ? item.authUser : 'off' %></dd>
+  </dl>
+  <h2 style="margin-top:14px">Scheduled import URL</h2>
+  <div class="copy-row"><input type="text" id="feedUrl" value="<%= feedUrl %>" readonly><button type="button" class="btn js-copy" data-target="#feedUrl">Copy</button></div>
+  <% if (item.legacyCode) { %>
+    <h2 style="margin-top:14px">Legacy URL <span class="muted">(same as db.bestoffers.biz /pc/up/)</span></h2>
+    <div class="copy-row"><input type="text" id="legacyUrl" value="<%= baseUrl %>/pc/up/?code=<%= item.legacyCode %>" readonly><button type="button" class="btn js-copy" data-target="#legacyUrl">Copy</button></div>
+  <% } %>
+  <p class="muted">Google Ads: Goals → Conversions → Uploads → Schedules → HTTPS. Microsoft Advertising: Conversions → Offline conversions → Schedule import from URL.</p>
+  <% if (user.role === 'admin') { %>
+    <form method="post" action="/exports/<%= item.id %>/rotate" class="inline js-confirm" data-confirm="Generate a new URL? The current one stops working."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm">Generate new URL</button></form>
+    <form method="post" action="/exports/<%= item.id %>/delete" class="inline js-confirm" data-confirm="Delete this export?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-danger">Delete</button></form>
+  <% } %>
+</div>
+<div class="card">
+  <h2>Preview <span class="muted">(first <%= preview.rows %> row(s) of the current window)</span></h2>
+  <pre class="small" style="max-height:400px"><%= preview.csv %></pre>
+</div>
+<div class="card">
+  <h2>Recent fetches</h2>
+  <% if (logs.length === 0) { %><p class="muted">Not fetched yet.</p><% } else { %>
+  <table class="table"><thead><tr><th>Time</th><th>Via</th><th class="num">Rows</th><th>IP</th><th>User agent</th></tr></thead><tbody>
+    <% for (const l of logs) { %><tr><td class="muted"><%= dt(l.createdAt) %></td><td><%= l.via %></td><td class="num"><%= num(l.rows) %></td><td><%= l.ip %></td><td class="muted"><%= trunc(l.ua, 50) %></td></tr><% } %>
+  </tbody></table>
+  <% } %>
+</div>
+<%- include('../partials/foot') %>

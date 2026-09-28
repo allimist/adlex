@@ -21,8 +21,8 @@
     <tr>
       <td class="muted" style="white-space:nowrap"><%= dt(v.createdAt) %></td>
       <td class="muted" style="white-space:nowrap"><%= dt(v.clickCreatedAt) %></td>
-      <td><% if (camp) { %><a href="/campaigns/<%= camp.id %>"><%= camp.name %></a><% } else { %><span class="muted">(deleted)</span><% } %></td>
-      <td><%= off ? off.name : '—' %></td>
+      <td><% if (camp) { %><a href="/campaigns/<%= camp.id %>"><%= camp.name %></a><% } else if (v.domain) { %><span title="website"><%= v.domain %></span><% } else { %><span class="muted">(deleted)</span><% } %></td>
+      <td><%= off ? off.name : (v.brand || '—') %></td>
       <td><span class="badge <%= ['rejected','refund','chargeback','cancelled','canceled'].includes(v.status) ? 'badge-fail' : 'badge-ok' %>"><%= v.status %></span></td>
       <td class="num"><%= money(v.payout) %></td>
       <td><code><%= trunc(v.txid, 20) %></code></td>
@@ -35,4 +35,13 @@
 </table>
 </div>
 <%- include('../partials/pagination', { nextAfter, baseQuery }) %>
+<% if (orphans.length) { %>
+<div class="card" style="margin-top:16px">
+  <h2>Unmatched postbacks <span class="muted">(<%= orphans.length %>)</span></h2>
+  <p class="muted">Postbacks whose clickid never arrived within 30 minutes. Usually a typo in the network's postback URL or an id from another tracker.</p>
+  <table class="table"><thead><tr><th>Received</th><th>Click id</th><th>Status</th><th class="num">Payout</th><th>Tx id</th><th>IP</th></tr></thead><tbody>
+  <% for (const o of orphans) { %><tr><td class="muted"><%= dt(o.createdAt) %></td><td><code><%= o.params.clickid %></code></td><td><%= o.params.status %></td><td class="num"><%= o.params.payout %></td><td><code><%= trunc(o.params.txid, 20) %></code></td><td><%= o.ip %></td></tr><% } %>
+  </tbody></table>
+</div>
+<% } %>
 <%- include('../partials/foot') %>

@@ -29,7 +29,7 @@ if (!source) {
 }
 
 let offerA = await findByName('offers', 'Demo Offer A');
-if (!offerA) offerA = await offers.create({ name: 'Demo Offer A', network: 'httpbin', url: 'https://httpbin.org/get?cid={clickid}&s1={sub1}', payout: 2.5, currency: 'USD', status: 'active' });
+if (!offerA) offerA = await offers.create({ name: 'Demo Offer A', network: 'httpbin', url: 'https://httpbin.org/get?cid={clickid}&s1={t1}', payout: 2.5, currency: 'USD', status: 'active' });
 let offerB = await findByName('offers', 'Demo Offer B');
 if (!offerB) offerB = await offers.create({ name: 'Demo Offer B', network: 'httpbin', url: 'https://httpbin.org/anything?click={clickid}', payout: 1, currency: 'USD', status: 'active' });
 
@@ -62,5 +62,5 @@ if (!(await findByName('triggers', 'Demo S2S postback'))) {
 await db.close();
 console.log('Seeded.');
 console.log('Click URL :', campaigns.buildClickUrl(campaign, source));
-console.log('Example   :', `${config.baseUrl}/click/${campaign.key}?clickid=EXT123&cost=0.012&sub1=zone9`);
+console.log('Example   :', `${config.baseUrl}/click/${campaign.key}?clickid=EXT123&cost=0.012&t1=zone9`);
 console.log('Postback  :', campaigns.postbackUrl(campaign));

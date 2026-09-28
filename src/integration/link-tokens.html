@@ -1,0 +1,47 @@
+<script>
+/* AdLex 2/3 — link tokens. Fills {token} and %7Btoken%7D in link URLs from cookies or the page URL,
+   e.g. https://network.example/go?sub1={se}&sub2={clickIdType}&sub3={clickId}&brand=trim */
+(function () {
+  function getCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  var urlParams = new URLSearchParams(window.location.search);
+  var TOKEN = /\{([^{}]+)\}|%7B([^%]+)%7D/gi;
+
+  function value(name) {
+    return getCookie(name) || urlParams.get(name) || '';
+  }
+
+  // The original href is kept in data-adlex-href, so links can be filled again when the
+  // click id arrives a moment after the page loaded.
+  function fill(root) {
+    (root || document).querySelectorAll('a[href]').forEach(function (a) {
+      var template = a.getAttribute('data-adlex-href');
+      if (!template) {
+        template = a.getAttribute('href');
+        if (!template || !/\{[^{}]+\}|%7B[^%]+%7D/i.test(template)) return;
+        a.setAttribute('data-adlex-href', template);
+      }
+      a.setAttribute('href', template.replace(TOKEN, function (m, a1, a2) {
+        return encodeURIComponent(value(a1 || a2));
+      }));
+    });
+  }
+
+  function start() {
+    fill(document);
+    // Offer blocks rendered later (e.g. from JSON) get filled too.
+    var pending = false;
+    new MutationObserver(function () {
+      if (pending) return;
+      pending = true;
+      setTimeout(function () { pending = false; fill(document); }, 0);
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
+  document.addEventListener('adlex:session', function () { fill(document); });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>

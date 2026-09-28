@@ -1,0 +1,17 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= title %></h1><a class="btn" href="/sites">Back</a></div>
+<form method="post" action="/sites/<%= encodeURIComponent(item.id) %>" class="form card">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="row">
+    <label>Traffic source
+      <select name="sourceId"><% for (const s of sourceList) { %><option value="<%= s.id %>" <%= item.sourceId === s.id ? 'selected' : '' %>><%= s.name %></option><% } %></select>
+    </label>
+    <label>Status
+      <select name="status"><% for (const s of statuses) { %><option value="<%= s %>" <%= item.status === s ? 'selected' : '' %>><%= s %></option><% } %></select>
+      <span class="hint">Archived sites are rejected by /se/ and /pc/.</span>
+    </label>
+  </div>
+  <label>Notes <textarea name="notes"><%= item.notes || '' %></textarea></label>
+  <button class="btn btn-primary">Save</button>
+</form>
+<%- include('../partials/foot') %>

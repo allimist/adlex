@@ -1,0 +1,44 @@
+<script>
+/* AdLex 3/3 — brand clicks. A click on a link whose URL has brand=… is sent to AdLex as a
+   "brandclick" conversion for this visitor. The link opens normally, with no delay. */
+(function () {
+  var ADLEX = '__ADLEX_URL__';
+
+  function getCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  function report(link) {
+    var se = getCookie('se');
+    if (!se) return; // no AdLex click id yet: nothing to attribute
+    var url;
+    try {
+      url = new URL(link.href, window.location.href);
+    } catch (e) {
+      return;
+    }
+    var q = new URLSearchParams({
+      clickid: se,
+      status: 'brandclick',
+      brand: url.searchParams.get('brand') || '',
+      link_type: url.searchParams.get('link_type') || '',
+      page_url: getCookie('page_url'),
+    });
+    var endpoint = ADLEX + '/postback?' + q.toString();
+    // sendBeacon survives the page navigating away and never blocks the click
+    if (!(navigator.sendBeacon && navigator.sendBeacon(endpoint))) {
+      fetch(endpoint, { method: 'POST', keepalive: true, mode: 'no-cors' }).catch(function () {});
+    }
+  }
+
+  function onClick(e) {
+    if (e.type === 'auxclick' && e.button !== 1) return; // middle click also opens the link
+    var link = e.target.closest && e.target.closest('a[href]');
+    if (link && link.href.indexOf('brand=') !== -1) report(link);
+  }
+
+  document.addEventListener('click', onClick, true);
+  document.addEventListener('auxclick', onClick, true);
+})();
+</script>

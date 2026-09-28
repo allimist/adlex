@@ -21,6 +21,7 @@ conversionsRouter.get('/', async (req, res) => {
     offerMap: await offers.mapById(),
     campaignList: await campaigns.list(),
     offerList: await offers.list(),
+    orphans: await conversions.listOrphans(),
     baseQuery: { ...filter, preset: range.preset === 'custom' ? '' : range.preset, from: range.preset === 'custom' ? range.fromDay : '', to: range.preset === 'custom' ? range.toDay : '', after: req.query.after || '' },
   });
 });

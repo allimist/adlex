@@ -1,0 +1,78 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1><%= title %></h1><a class="btn" href="<%= isNew ? '/exports' : '/exports/' + item.id %>">Back</a></div>
+<form method="post" action="<%= isNew ? '/exports' : '/exports/' + item.id %>" class="form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="card">
+    <div class="row">
+      <label>Name <input type="text" name="name" value="<%= item.name || '' %>" required maxlength="80"></label>
+      <label>Platform
+        <select name="platform" class="js-export-platform"><% for (const [k, p] of Object.entries(platforms)) { %><option value="<%= k %>" <%= item.platform === k ? 'selected' : '' %>><%= p.label %></option><% } %></select>
+        <span class="hint">Google Ads includes conversions with a gclid; Microsoft includes conversions with an msclkid; Custom includes all.</span>
+      </label>
+      <label>Conversion name <input type="text" name="conversionName" value="<%= item.conversionName || '' %>" maxlength="100" placeholder="e.g. Offline Sale">
+        <span class="hint">Must match the conversion action name in the ad platform exactly.</span>
+      </label>
+      <label class="check" style="margin-top:22px"><input type="checkbox" name="enabled" value="1" <%= item.enabled ? 'checked' : '' %>> Enabled (URL answers)</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Window</h2>
+    <div class="row">
+      <label>Type
+        <select name="windowType" class="js-window-type"><% for (const [k, label] of windowTypes) { %><option value="<%= k %>" <%= item.windowType === k ? 'selected' : '' %>><%= label %></option><% } %></select>
+      </label>
+      <label class="js-window-rolling">Days <input type="number" name="windowDays" min="1" max="90" value="<%= item.windowDays || 2 %>">
+        <span class="hint">Conversions received in the last N×24h. Overlapping daily uploads are fine: the platforms ignore duplicates.</span>
+      </label>
+      <label class="js-window-monthly">Month
+        <select name="month"><% for (const [k, label] of months) { %><option value="<%= k %>" <%= item.month === k ? 'selected' : '' %>><%= label %></option><% } %></select>
+      </label>
+      <label>Time zone offset <input type="text" name="utcOffset" value="<%= item.utcOffset || '+0000' %>" pattern="[+-][0-9]{4}" maxlength="5">
+        <span class="hint">±HHMM. Used for the <code>Parameters:TimeZone</code> row, conversion times and month boundaries.</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Values &amp; filters</h2>
+    <div class="row">
+      <label class="check" style="margin-top:22px"><input type="checkbox" name="includePayout" value="1" <%= item.includePayout ? 'checked' : '' %>> Include payout as conversion value</label>
+      <label>Currency <input type="text" name="currency" value="<%= item.currency || 'USD' %>" maxlength="3"></label>
+      <label>Statuses <span class="hint">Use <code>brandclick</code> for a separate brand-click conversion action.</span><input type="text" name="statuses" value="<%= (item.statuses || []).join(', ') %>" placeholder="empty = sales (not rejected, not brandclick)">
+      </label>
+    </div>
+    <div class="row">
+      <label>Traffic sources <span class="hint">None selected = all.</span>
+        <select name="sourceIds" multiple size="4"><% for (const s of sourceList) { %><option value="<%= s.id %>" <%= (item.sourceIds || []).includes(s.id) ? 'selected' : '' %>><%= s.name %></option><% } %></select>
+      </label>
+      <label>Conversion name by brand <span class="hint">Optional, one per line: <code>Hone=offline_leads</code>. A postback's <code>event_name</code> always wins; then this; then the conversion name above.</span>
+        <textarea name="brandNames" rows="4" placeholder="Hone=offline_leads"><%= item.brandNames || '' %></textarea>
+      </label>
+      <label>Sites <span class="hint">Domains, one per line. Empty = all.</span>
+        <textarea name="siteIds" rows="4"><%= (item.siteIds || []).join('\n') %></textarea>
+      </label>
+    </div>
+  </div>
+
+  <div class="card js-custom-columns">
+    <h2>Custom columns</h2>
+    <p class="muted">One column per line: <code>Header={macro}</code>. Extra macros here: <code>{conversion_time}</code> <code>{click_time}</code> <code>{conversion_name}</code> <code>{currency}</code>.</p>
+    <textarea name="customColumns" rows="8"><%= item.customColumns || '' %></textarea>
+    <%- include('../partials/macros-legend', { macroList }) %>
+  </div>
+
+  <div class="card">
+    <h2>URL protection</h2>
+    <p class="muted">The export URL contains a secret token. You can also require HTTP basic auth (Google Ads scheduled HTTPS imports support a username and password).</p>
+    <label>Legacy code <span class="hint">Optional. Also serve this export at <code>/pc/up/?code=&lt;code&gt;</code> — the db.bestoffers.biz URL — so an existing scheduled import only needs its domain changed. At least 6 characters.</span>
+      <input type="text" name="legacyCode" value="<%= item.legacyCode || '' %>" maxlength="64" pattern="[A-Za-z0-9_-]*" autocomplete="off">
+    </label>
+    <div class="row">
+      <label>Username <input type="text" name="authUser" value="<%= item.authUser || '' %>" autocomplete="off"></label>
+      <label>Password <input type="password" name="authPassword" value="" autocomplete="new-password" placeholder="<%= item.authPassword ? 'unchanged' : '' %>"></label>
+    </div>
+  </div>
+  <button class="btn btn-primary"><%= isNew ? 'Create export' : 'Save changes' %></button>
+</form>
+<%- include('../partials/foot') %>

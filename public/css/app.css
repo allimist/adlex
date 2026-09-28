@@ -58,7 +58,8 @@ h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 10px}
 .copy-row{display:flex;gap:8px;align-items:center}
 .copy-row input{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius)}
 .rows-editor .row-item{display:grid;grid-template-columns:1fr 120px auto;gap:8px;align-items:center;margin-bottom:6px}
-.rows-editor.params .row-item{grid-template-columns:110px 1fr 1fr auto}
+.rows-editor.params .row-item{grid-template-columns:110px 1fr 1fr 96px 32px}
+.param-hide{justify-self:center;margin:0}
 .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
 .stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;min-width:120px}
@@ -67,3 +68,12 @@ h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 10px}
 .pos{color:var(--success)}.neg{color:var(--danger)}
 pre.small{font-size:11px;white-space:pre-wrap;word-break:break-all;background:#f3f4f6;padding:8px;border-radius:4px;max-height:200px;overflow:auto;margin:0}
 @media (max-width:700px){.kv{grid-template-columns:1fr}.rows-editor .row-item,.rows-editor.params .row-item{grid-template-columns:1fr}}
+[hidden]{display:none!important}
+pre.code-snippet{max-height:420px;white-space:pre;word-break:normal;font-size:12px}
+.col-picker{position:relative}
+.col-picker summary{cursor:pointer;list-style:none}
+.col-picker summary::-webkit-details-marker{display:none}
+.col-picker .col-menu{position:absolute;right:0;z-index:10;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px;box-shadow:0 4px 14px rgba(0,0,0,.08);width:260px}
+.col-picker .col-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 8px;margin:8px 0;font-size:13px}
+.col-picker .col-grid label{display:flex;gap:4px;align-items:center;color:inherit}
+.col-picker .col-actions{display:flex;gap:6px;justify-content:space-between}

@@ -1,0 +1,67 @@
+<%- include('../partials/head', { title }) %>
+<% const live = run.status === 'running' || run.status === 'counting'; const p = run.progress || {}; const r = run.results; %>
+<% if (live) { %><meta http-equiv="refresh" content="2"><% } %>
+<div class="page-head"><h1>QA run <span class="badge <%= run.status === 'done' ? 'badge-ok' : run.status === 'failed' ? 'badge-fail' : '' %>"><%= run.status %></span></h1>
+  <div>
+    <a class="btn" href="/qa">Back</a>
+    <% if (!live) { %><form method="post" action="/qa/<%= id %>/delete" class="inline js-confirm" data-confirm="Delete this run and all clicks/conversions it created?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger">Delete test data</button></form><% } %>
+  </div>
+</div>
+
+<div class="card">
+  <dl class="kv">
+    <% if (run.startAt === 'site') { %>
+      <dt>Start at</dt><dd>site URL (classic flow) <code><%= run.landingUrl %></code></dd>
+    <% } else { %>
+      <dt>Campaign</dt><dd><%= run.campaignName %> <code>/click/<%= run.campaignKey %></code></dd>
+    <% } %>
+    <dt>Mode</dt><dd><%= run.mode %></dd>
+    <dt>Plan</dt><dd><%= run.waves %> waves × <%= run.visitorsPerWave %> visitors every <%= run.intervalSec %>s = <strong><%= num(run.planned) %></strong> visits<%= run.clickBrand ? `, brand click after ${run.brandDelaySec}s` : ', no brand click' %></dd>
+    <dt>Run tag</dt><dd><code><%= id %></code> (clicks and conversions carry <code>qaRun</code>)</dd>
+    <dt>Started</dt><dd><%= dt(run.startedAt) %><%= run.finishedAt ? ` · finished ${dt(run.finishedAt)} (${((run.finishedAt - run.startedAt) / 1000).toFixed(1)}s)` : '' %></dd>
+  </dl>
+  <% if (run.error) { %><div class="flash flash-error" style="margin-top:10px"><%= run.error %></div><% } %>
+</div>
+
+<div class="stat-row">
+  <div class="stat"><div class="lbl">Visits started</div><div class="val"><%= num(p.started) %> / <%= num(run.planned) %></div></div>
+  <div class="stat"><div class="lbl">Landed on site</div><div class="val"><%= num(p.landed) %></div></div>
+  <div class="stat"><div class="lbl"><%= run.startAt === 'site' ? 'Got se from /se/' : 'Landed with se' %></div><div class="val"><%= num(p.landedWithSe) %></div></div>
+  <% if (run.mode === 'browser' && run.startAt !== 'site') { %><div class="stat"><div class="lbl">Links filled</div><div class="val"><%= num(p.linksFilled) %></div></div><% } %>
+  <div class="stat"><div class="lbl">Brand links clicked</div><div class="val"><%= num(p.brandClicked) %></div></div>
+  <div class="stat"><div class="lbl">Reports sent by the site</div><div class="val"><%= num(p.brandReported || 0) %></div></div>
+  <div class="stat"><div class="lbl">Errors</div><div class="val <%= p.errors ? 'neg' : '' %>"><%= num(p.errors) %></div></div>
+</div>
+
+<% if (r) { const clicksOk = r.clicks === p.landed; const brandOk = r.brandClickConversions === p.brandClicked; %>
+<div class="card">
+  <h2>What adlex stored</h2>
+  <table class="table">
+    <thead><tr><th>Check</th><th class="num">Expected</th><th class="num">In adlex</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>Clicks in the click log</td><td class="num"><%= num(p.landed) %></td><td class="num"><%= num(r.clicks) %></td><td><span class="badge <%= clicksOk ? 'badge-ok' : 'badge-fail' %>"><%= clicksOk ? 'OK' : 'mismatch' %></span></td></tr>
+      <tr><td>Clicks with an ad click id</td><td class="num">—</td><td class="num"><%= num(r.clicksWithAdClickId) %></td><td></td></tr>
+      <% if (run.clickBrand) { %>
+      <tr><td><code>brandclick</code> conversions</td><td class="num"><%= num(p.brandClicked) %></td><td class="num"><%= num(r.brandClickConversions) %></td><td><span class="badge <%= brandOk ? 'badge-ok' : 'badge-fail' %>"><%= brandOk ? 'OK' : 'mismatch' %></span></td></tr>
+      <tr><td>Brand clicks still queued (click not stored yet)</td><td class="num">0</td><td class="num"><%= num(r.pendingBrandClicks) %></td><td></td></tr>
+      <% } %>
+    </tbody>
+  </table>
+  <% if (r.byBrand && Object.keys(r.byBrand).length) { %>
+    <h2 style="margin-top:14px">Brand clicks by brand</h2>
+    <div class="stat-row"><% for (const [b, n] of Object.entries(r.byBrand).sort((a, b) => b[1] - a[1])) { %><div class="stat"><div class="lbl"><%= b %></div><div class="val"><%= num(n) %></div></div><% } %></div>
+  <% } %>
+  <% if (!clicksOk || (run.clickBrand && !brandOk)) { %>
+    <p class="muted">Common causes: the landing domain isn't under Sites (brand clicks get 403), the offer doesn't append <code>se</code>, visits that errored, or — when the test browsers reach adlex through its public URL rather than from the same machine — the per-IP limit of <%= rateLimit %> brand clicks per minute (<code>COLLECT_RATE_PER_MIN</code>).</p>
+  <% } %>
+  <p><a class="btn btn-sm" href="/clicklog?preset=today">Open click log</a> <a class="btn btn-sm" href="/conversions?preset=today">Open conversions</a></p>
+</div>
+<% } %>
+
+<% if (run.errorsSample && run.errorsSample.length) { %>
+<div class="card">
+  <h2>Errors (first <%= run.errorsSample.length %>)</h2>
+  <pre class="small"><%= run.errorsSample.join('\n') %></pre>
+</div>
+<% } %>
+<%- include('../partials/foot') %>

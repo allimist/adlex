@@ -4,6 +4,7 @@ import { HttpError } from '../lib/http.js';
 import { TtlCache } from '../lib/cache.js';
 import { shortKey, randomToken } from '../lib/ids.js';
 import { config } from '../config.js';
+import { normalizeSourceParams } from '../lib/tparams.js';
 
 const col = () => getDb().collection('campaigns');
 export const STATUSES = ['active', 'paused', 'archived'];
@@ -41,6 +42,7 @@ export async function getBundleByKey(key) {
   if (!campaign) return bundles.set(key, null);
   const db = getDb();
   const source = toObj(await db.collection('sources').doc(campaign.sourceId).get());
+  if (source) source.params = normalizeSourceParams(source.params);
   const offers = [];
   for (const entry of campaign.offers || []) {
     const offer = toObj(await db.collection('offers').doc(entry.offerId).get());
@@ -72,6 +74,7 @@ function fromBody(body) {
     costPerClick: Math.max(0, Number(body.costPerClick) || 0),
     fallbackUrl: String(body.fallbackUrl || '').trim(),
     status: body.status || 'active',
+    allowLp: !!body.allowLp,
   };
 }
 
@@ -138,9 +141,11 @@ export async function remove(id) {
 /** Click URL with the source's own tokens, e.g. .../click/abc123?clickid=${SUBID}&cost=${COST} */
 export function buildClickUrl(campaign, source) {
   const base = `${config.baseUrl}/click/${campaign.key}`;
-  if (!source || !source.params) return base;
-  const parts = [];
+  // {lpurl} is the final URL macro in Microsoft Ads and Google Ads tracking templates.
+  const parts = campaign.allowLp ? ['lp={lpurl}'] : [];
+  if (!source || !source.params) return parts.length ? `${base}?${parts.join('&')}` : base;
   for (const [key, p] of Object.entries(source.params)) {
+    if (p && p.hideInUrl) continue; // added by the ad platform itself (e.g. msclkid); still read on /click
     if (p && p.name && p.token) parts.push(`${p.name}=${p.token}`);
     else if (p && p.name && key !== 'cost') parts.push(`${p.name}=`);
   }

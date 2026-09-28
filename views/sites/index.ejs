@@ -1,0 +1,56 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>Sites</h1></div>
+<p class="muted">Websites allowed to send events to <code><%= baseUrl %>/se/</code> (session start, returns the clickid) and <code><%= baseUrl %>/pc/</code> (brand clicks). Requests are matched by the page's domain; subdomains are covered by their parent domain.</p>
+
+<% if (user.role === 'admin') { %>
+<form method="post" action="/sites" class="form card">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <h2>Add sites</h2>
+  <div class="row">
+    <label>Domains <span class="hint">One per line (or comma separated). <code>https://</code>, <code>www.</code> and paths are stripped.</span>
+      <textarea name="domains" rows="4" required placeholder="example.com&#10;best-offers.net"></textarea>
+    </label>
+    <label>Traffic source <span class="hint">Its parameter mapping (t1…t20) and postback triggers apply to these sites.</span>
+      <select name="sourceId" required><% for (const s of sourceList) { %><option value="<%= s.id %>"><%= s.name %></option><% } %></select>
+      <% if (sourceList.length === 0) { %><span class="hint">Create a traffic source first (preset “Website”).</span><% } %>
+    </label>
+  </div>
+  <button class="btn btn-primary">Add</button>
+</form>
+<% if (result && (result.skipped.length || result.invalid.length)) { %>
+  <div class="card">
+    <% if (result.skipped.length) { %><p><strong>Already existed (<%= result.skipped.length %>):</strong> <span class="muted"><%= trunc(result.skipped.join(', '), 400) %></span></p><% } %>
+    <% if (result.invalid.length) { %><p><strong>Not a valid domain (<%= result.invalid.length %>):</strong> <span class="muted"><%= trunc(result.invalid.join(', '), 400) %></span></p><% } %>
+  </div>
+<% } %>
+<% } %>
+
+<form method="get" class="filters" action="/sites">
+  <label>Search <input type="text" name="q" value="<%= q %>" placeholder="domain"></label>
+  <button class="btn">Filter</button>
+  <span class="muted"><%= num(shown) %> of <%= num(total) %> site(s)<%= shown > rows.length ? ` · showing first ${rows.length}` : '' %></span>
+</form>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Domain</th><th>Traffic source</th><th>Status</th><th>Added</th><th></th></tr></thead>
+  <tbody>
+  <% if (rows.length === 0) { %><tr><td colspan="5" class="muted">No sites.</td></tr><% } %>
+  <% for (const s of rows) { const src = sourceMap.get(s.sourceId); %>
+    <tr>
+      <td><code><%= s.id %></code></td>
+      <td><%= src ? src.name : '(missing)' %></td>
+      <td><span class="badge badge-<%= s.status %>"><%= s.status %></span></td>
+      <td class="muted"><%= dt(s.createdAt) %></td>
+      <td class="actions">
+        <a class="btn btn-sm" href="/clicklog?siteId=<%= encodeURIComponent(s.id) %>">Clicks</a>
+        <% if (user.role === 'admin') { %>
+          <a class="btn btn-sm" href="/sites/<%= encodeURIComponent(s.id) %>/edit">Edit</a>
+          <form method="post" action="/sites/<%= encodeURIComponent(s.id) %>/delete" class="inline js-confirm" data-confirm="Remove <%= s.id %>? Its events will be rejected."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-sm btn-danger">Remove</button></form>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/foot') %>

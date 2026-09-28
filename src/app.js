@@ -19,6 +19,10 @@ import { sourcesRouter } from './routes/sources.js';
 import { triggersRouter, postbackLogsRouter } from './routes/triggers.js';
 import { clicklogRouter } from './routes/clicklog.js';
 import { conversionsRouter } from './routes/conversions.js';
+import { sitesRouter } from './routes/sites.js';
+import { exportsRouter } from './routes/exports.js';
+import { qaRouter } from './routes/qa.js';
+import { integrationRouter } from './routes/integration.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -28,9 +32,13 @@ export const NAV = [
   ['/campaigns', 'Campaigns'],
   ['/offers', 'Offers'],
   ['/sources', 'Traffic sources'],
+  ['/sites', 'Sites'],
   ['/conversions', 'Conversions'],
   ['/clicklog', 'Clicklog'],
   ['/triggers', 'Triggers'],
+  ['/exports', 'Exports'],
+  ['/integration', 'Integration'],
+  ['/qa', 'QA', 'admin'],
   ['/users', 'Users', 'admin'],
 ];
 
@@ -41,7 +49,7 @@ export function createApp() {
   app.set('view engine', 'ejs');
   app.set('views', path.join(root, 'views'));
   app.set('query parser', 'simple');
-  Object.assign(app.locals, helpers, { nav: NAV, baseUrl: config.baseUrl, appName: 'adlex' });
+  Object.assign(app.locals, helpers, { nav: NAV, baseUrl: config.baseUrl, appName: 'AdLex' });
 
   app.use(express.static(path.join(root, 'public'), { maxAge: config.isProd ? '1h' : 0 }));
   app.use(express.urlencoded({ extended: false, limit: '256kb' }));
@@ -82,6 +90,10 @@ export function createApp() {
   app.use('/postback-logs', postbackLogsRouter);
   app.use('/clicklog', clicklogRouter);
   app.use('/conversions', conversionsRouter);
+  app.use('/sites', sitesRouter);
+  app.use('/exports', exportsRouter);
+  app.use('/integration', integrationRouter);
+  app.use('/qa', requireAdmin, qaRouter);
   app.use('/users', requireAdmin, usersRouter);
 
   app.use(notFound);

@@ -21,20 +21,29 @@
     </div>
   </div>
 
-  <div class="card rows-editor params">
+  <div class="card rows-editor params js-tparams">
     <h2>Parameter mapping</h2>
-    <p class="muted">For each field: the query parameter name we read on <code>/click</code>, and the traffic source's macro/token used to build the campaign URL.</p>
-    <div class="row-item" style="font-size:12px;color:var(--muted)"><span>Field</span><span>Query param name</span><span>Source token</span><span></span></div>
-    <% for (const k of paramKeys) { const p = (item.params && item.params[k]) || { name: k, token: '' }; %>
-      <div class="row-item">
+    <p class="muted">For each field: the query parameter name we read on <code>/click</code>, and the traffic source's macro/token used to build the campaign URL. Tick <strong>Hide from URL</strong> for parameters the ad platform appends by itself (e.g. Bing adds <code>msclkid</code>): they're left out of the campaign URL but still read on every click. Custom params <code>t1</code>…<code>t<%= tMax %></code> are stored on each click and available as <code>{t1}</code>…<code>{t<%= tMax %>}</code> in offer URLs and postbacks.</p>
+    <div class="row-item" style="font-size:12px;color:var(--muted)"><span>Field</span><span>Query param name</span><span>Source token</span><span title="Leave this parameter out of the campaign URL (e.g. msclkid, which Bing adds by itself). It is still read on every click.">Hide from URL</span><span></span></div>
+    <% const visible = new Set([...fixedKeys, ...activeTKeys(item.params)]); %>
+    <% for (const k of paramKeys) { const p = (item.params && item.params[k]) || { name: k, token: '' }; const optional = !fixedKeys.includes(k) && !tBaseKeys.includes(k); %>
+      <div class="row-item js-param-row" data-key="<%= k %>" <%= visible.has(k) ? '' : 'hidden' %>>
         <strong><%= k %></strong>
         <input type="text" name="param_name_<%= k %>" value="<%= p.name %>" placeholder="<%= k %>">
         <input type="text" name="param_token_<%= k %>" value="<%= p.token %>" placeholder="e.g. ${SUBID} or {{ad.id}}">
-        <span></span>
+        <label class="check param-hide" title="Hide from the campaign URL — still read on every click"><input type="checkbox" name="param_hide_<%= k %>" value="1" <%= p.hideInUrl ? 'checked' : '' %>></label>
+        <% if (optional) { %><button type="button" class="btn btn-sm js-remove-tparam" title="Remove">&times;</button><% } else { %><span></span><% } %>
       </div>
     <% } %>
+    <button type="button" class="btn btn-sm js-add-tparam">+ Add parameter</button>
+    <span class="hint js-tparam-limit" hidden>Maximum of <%= tMax %> custom params reached.</span>
   </div>
 
+  <div class="card">
+    <label>Postback token <span class="hint">Optional. For website clicks (no campaign), incoming <code>/postback</code> calls must include <code>&amp;token=</code> this value.</span>
+      <input type="text" name="postbackToken" value="<%= item.postbackToken || '' %>" maxlength="64" pattern="[A-Za-z0-9_-]*" placeholder="leave empty to accept postbacks without a token">
+    </label>
+  </div>
   <div class="card">
     <label>Notes <textarea name="notes"><%= item.notes || '' %></textarea></label>
   </div>

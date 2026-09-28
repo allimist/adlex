@@ -6,9 +6,15 @@
     <label>Name <input type="text" name="name" value="<%= item.name || '' %>" required maxlength="80"></label>
     <label>Affiliate network <input type="text" name="network" value="<%= item.network || '' %>" maxlength="80"></label>
   </div>
-  <label>Offer URL <input type="url" name="url" value="<%= item.url || '' %>" required placeholder="https://network.example/offer?s1={clickid}&s2={sub1}">
+  <label>Offer URL <input type="url" name="url" value="<%= item.url || '' %>" required placeholder="https://network.example/offer?s1={clickid}&s2={t1}">
     <span class="hint">Put <code>{clickid}</code> where the network expects its click/sub id so postbacks can be matched.</span></label>
   <%- include('../partials/macros-legend', { macroList }) %>
+  <div class="row" style="margin-top:12px">
+    <label class="check" style="margin-top:22px"><input type="checkbox" name="appendTracking" value="1" <%= item.appendTracking ? 'checked' : '' %>> Append tracking to the landing URL
+      <span class="hint">For your own websites: adds <code>?se=&lt;clickid&gt;</code> plus every filled <code>t1…t20</code> and the ad click id (msclkid/gclid). The site stores them in cookies and fills <code>{se}</code> <code>{t1}</code> … in its offer links.</span></label>
+    <label>Click id param name <input type="text" name="trackingParam" value="<%= item.trackingParam || 'se' %>" maxlength="32" pattern="[A-Za-z0-9_-]+">
+      <span class="hint">The bestoffers CMS expects <code>se</code>.</span></label>
+  </div>
   <div class="row" style="margin-top:12px">
     <label>Default payout <input type="number" step="0.01" min="0" name="payout" value="<%= item.payout || 0 %>"><span class="hint">Used when the postback carries no payout.</span></label>
     <label>Currency <input type="text" name="currency" value="<%= item.currency || 'USD' %>" maxlength="3"></label>

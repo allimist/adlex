@@ -31,6 +31,8 @@ function fromBody(body) {
     payout: Number(body.payout) || 0,
     currency: String(body.currency || 'USD').trim().toUpperCase().slice(0, 3) || 'USD',
     status: body.status || 'active',
+    appendTracking: !!body.appendTracking,
+    trackingParam: String(body.trackingParam || 'se').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'se',
   };
 }
 

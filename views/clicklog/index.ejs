@@ -1,11 +1,35 @@
 <%- include('../partials/head', { title }) %>
-<div class="page-head"><h1>Clicklog</h1></div>
+<div class="page-head"><h1>Clicklog</h1>
+  <details class="col-picker">
+    <summary class="btn">Columns (<%= cols.length %>)</summary>
+    <form method="get" action="/clicklog" class="col-menu">
+      <% for (const [k, v] of Object.entries(baseQuery)) { if (v) { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% } } %>
+      <input type="hidden" name="tcols_set" value="1">
+      <strong style="font-size:13px">Website</strong>
+      <div class="col-grid" style="grid-template-columns:repeat(2,1fr)">
+        <% for (const [k, label] of extraCols) { %><label><input type="checkbox" name="tcols" value="<%= k %>" <%= cols.includes(k) ? 'checked' : '' %>> <%= label %></label><% } %>
+      </div>
+      <strong style="font-size:13px">Params</strong>
+      <div class="col-grid">
+        <% for (const k of tKeys) { %><label><input type="checkbox" name="tcols" value="<%= k %>" <%= cols.includes(k) ? 'checked' : '' %>> <%= k %></label><% } %>
+      </div>
+      <div class="col-actions">
+        <span>
+          <button type="button" class="btn btn-sm" onclick="this.form.querySelectorAll('[name=tcols]').forEach(function(c){c.checked=true})">All</button>
+          <button type="button" class="btn btn-sm" onclick="this.form.querySelectorAll('[name=tcols]').forEach(function(c){c.checked=false})">None</button>
+        </span>
+        <button class="btn btn-sm btn-primary">Apply</button>
+      </div>
+    </form>
+  </details>
+</div>
 <form method="get" class="filters" action="/clicklog">
   <input type="hidden" name="preset" value="<%= range.preset === 'custom' ? '' : range.preset %>">
   <% if (range.preset === 'custom') { %><input type="hidden" name="from" value="<%= range.fromDay %>"><input type="hidden" name="to" value="<%= range.toDay %>"><% } %>
   <label>Campaign
     <select name="campaignId"><option value="">All</option><% for (const c of campaignList) { %><option value="<%= c.id %>" <%= filter.campaignId === c.id ? 'selected' : '' %>><%= c.name %></option><% } %></select>
   </label>
+  <% if (filter.siteId) { %><input type="hidden" name="siteId" value="<%= filter.siteId %>"><span class="chip active">site: <%= filter.siteId %> <a href="/clicklog" style="color:inherit">×</a></span><% } %>
   <label>Converted
     <select name="converted"><option value="">Any</option><option value="1" <%= filter.converted === '1' ? 'selected' : '' %>>Yes</option><option value="0" <%= filter.converted === '0' ? 'selected' : '' %>>No</option></select>
   </label>
@@ -14,9 +38,9 @@
 <%- include('../partials/daterange', { range, presets, extra: filter }) %>
 <div class="table-wrap">
 <table class="table">
-  <thead><tr><th>Time</th><th>Click id</th><th>Campaign</th><th>Offer</th><th>External id</th><th>Subs</th><th>IP</th><th>Country</th><th class="num">Cost</th><th>Conv.</th><th class="num">Revenue</th></tr></thead>
+  <thead><tr><th>Time</th><th>Click id</th><th>Campaign</th><th>Offer</th><th>External id</th><% for (const [k, label] of extraCols) { if (cols.includes(k)) { %><th><%= label %></th><% } } %><% for (const k of tKeys) { if (cols.includes(k)) { %><th><%= k %></th><% } } %><th>IP</th><th>Country</th><th class="num">Cost</th><th>Conv.</th><th class="num">Revenue</th></tr></thead>
   <tbody>
-  <% if (rows.length === 0) { %><tr><td colspan="11" class="muted">No clicks in this range.</td></tr><% } %>
+  <% if (rows.length === 0) { %><tr><td colspan="<%= 10 + cols.length %>" class="muted">No clicks in this range.</td></tr><% } %>
   <% for (const c of rows) { const camp = campaignMap.get(c.campaignId); const off = offerMap.get(c.offerId); %>
     <tr>
       <td class="muted" style="white-space:nowrap"><%= dt(c.createdAt) %></td>
@@ -24,7 +48,12 @@
       <td><% if (camp) { %><a href="/campaigns/<%= camp.id %>"><%= camp.name %></a><% } else { %><span class="muted"><%= c.campaignKey %></span><% } %></td>
       <td><%= off ? off.name : '—' %></td>
       <td><code><%= trunc(c.externalId, 24) %></code></td>
-      <td class="muted" title="<%= [c.sub1,c.sub2,c.sub3,c.sub4,c.sub5].join(' | ') %>"><%= trunc([c.sub1,c.sub2,c.sub3,c.sub4,c.sub5].filter(Boolean).join(' | '), 40) %></td>
+      <% if (cols.includes('domain')) { %><td><%= c.domain || '' %><%- c.bot ? ' <span class="badge">bot</span>' : '' %></td><% } %>
+      <% if (cols.includes('adClickId')) { %><td class="muted" title="<%= c.adClickType ? c.adClickType + ': ' + c.adClickId : '' %>"><% if (c.adClickType) { %><span class="badge"><%= c.adClickType %></span> <%= trunc(c.adClickId, 14) %><% } %></td><% } %>
+      <% if (cols.includes('lastBrand')) { %><td><%= c.lastBrand || '' %></td><% } %>
+      <% if (cols.includes('outclicks')) { %><td class="num"><%= c.outclicks || '' %></td><% } %>
+      <% if (cols.includes('ua')) { %><td class="muted" title="<%= c.ua || '' %>" style="max-width:260px"><%= trunc(c.ua || '', 45) %></td><% } %>
+      <% for (const k of tKeys) { if (cols.includes(k)) { const v = tValue(c, k); %><td class="muted" title="<%= v %>"><%= trunc(v, 24) %></td><% } } %>
       <td><%= c.ip %></td>
       <td><%= c.country || '' %></td>
       <td class="num"><%= money(c.cost, 4) %></td>

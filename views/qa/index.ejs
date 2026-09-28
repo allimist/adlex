@@ -1,0 +1,85 @@
+<%- include('../partials/head', { title }) %>
+<div class="page-head"><h1>QA: load test a campaign</h1></div>
+<p class="muted">Sends waves of test visitors through a campaign link, optionally clicks a brand link on the landing site, then counts the clicks and <code>brandclick</code> conversions adlex stored for this run. Test traffic is tagged, so it can be deleted afterwards.</p>
+
+<form method="post" action="/qa" class="form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="card">
+    <div class="row">
+      <label>Start at
+        <select name="startAt" class="js-qa-start"><% for (const [k, label] of startAt) { %><option value="<%= k %>" <%= item.startAt === k ? 'selected' : '' %>><%= label %></option><% } %></select>
+        <span class="hint">Classic: visitors open the site directly and its original session.js / brand-click.js talk to adlex (<code>/se/</code>, <code>/pc/</code>). Set the CMS to Flow = Classic.</span>
+      </label>
+      <label class="js-qa-site">Site URL <input type="url" name="landingUrl" value="<%= item.landingUrl || '' %>" placeholder="http://localhost:4110/weightloss">
+        <span class="hint">Its domain must be under Sites.</span></label>
+    </div>
+    <div class="row">
+      <label class="js-qa-campaign">Campaign
+        <select name="campaignId">
+          <option value="">— select —</option>
+          <% for (const c of campaignList) { %><option value="<%= c.id %>" <%= item.campaignId === c.id ? 'selected' : '' %>><%= c.name %><%= noTracking.has(c.id) ? ' (offer without “Append tracking”)' : '' %></option><% } %>
+        </select>
+        <span class="hint">The landing site must be listed under Sites, and the offer should have “Append tracking to the landing URL” on.</span>
+      </label>
+      <label>Mode
+        <select name="mode"><% for (const [k, label] of modes) { %><option value="<%= k %>" <%= item.mode === k ? 'selected' : '' %>><%= label %></option><% } %></select>
+        <span class="hint">Browser mode runs the site's real JavaScript (needs Google Chrome on this server).</span>
+      </label>
+    </div>
+    <div class="row">
+      <label>Visitors per wave <input type="number" name="visitorsPerWave" min="1" max="50" value="<%= item.visitorsPerWave %>" class="js-qa-plan"></label>
+      <label>Every (seconds) <input type="number" name="intervalSec" min="1" max="60" value="<%= item.intervalSec %>" class="js-qa-plan"></label>
+      <label>For (seconds) <input type="number" name="durationSec" min="1" max="600" value="<%= item.durationSec %>" class="js-qa-plan"></label>
+      <label>Total <input type="text" class="js-qa-total" readonly></label>
+    </div>
+    <div class="row">
+      <label class="check" style="margin-top:22px"><input type="checkbox" name="clickBrand" value="1" <%= item.clickBrand ? 'checked' : '' %>> Click a brand link on the site</label>
+      <label>… after (seconds) <input type="number" name="brandDelaySec" min="0" max="30" value="<%= item.brandDelaySec %>"></label>
+      <label>Extra link params <input type="text" name="extraParams" value="<%= item.extraParams %>">
+        <span class="hint"><code>{rand}</code> = random per visitor, <code>{n}</code> = visitor number.</span></label>
+    </div>
+    <p class="muted" style="margin:8px 0 0">Links to affiliate networks are blocked during the test, so no clicks reach them. Requests from this machine aren't rate limited; if test browsers reach adlex through a proxy/public URL they share one IP, limited to <%= rateLimit %> brand clicks per minute (<code>COLLECT_RATE_PER_MIN</code>).</p>
+  </div>
+  <button class="btn btn-primary" <%= running ? 'disabled' : '' %>><%= running ? 'A run is in progress…' : 'Start test' %></button>
+</form>
+
+<div class="card" style="margin-top:16px">
+  <h2>Recent runs</h2>
+  <% if (runs.length === 0) { %><p class="muted">No runs yet.</p><% } else { %>
+  <table class="table"><thead><tr><th>Started</th><th>Campaign</th><th>Mode</th><th class="num">Visits</th><th class="num">Clicks</th><th class="num">Brand clicks</th><th>Status</th></tr></thead><tbody>
+    <% for (const r of runs) { const res = r.results || {}; %>
+      <tr>
+        <td><a href="/qa/<%= r.id %>"><%= dt(r.createdAt) %></a></td>
+        <td><%= r.campaignName %></td>
+        <td><%= r.mode %></td>
+        <td class="num"><%= num(r.planned) %></td>
+        <td class="num"><%= r.results ? num(res.clicks) : '—' %></td>
+        <td class="num"><%= r.results ? num(res.brandClickConversions) : '—' %></td>
+        <td><span class="badge <%= r.status === 'done' ? 'badge-ok' : r.status === 'failed' ? 'badge-fail' : '' %>"><%= r.status %></span></td>
+      </tr>
+    <% } %>
+  </tbody></table>
+  <% } %>
+</div>
+<script>
+  (function () {
+    var f = document.querySelector('form[action="/qa"]');
+    var total = document.querySelector('.js-qa-total');
+    function sync() {
+      var v = +f.visitorsPerWave.value || 0, i = +f.intervalSec.value || 1, d = +f.durationSec.value || 0;
+      var waves = Math.max(1, Math.floor(d / i));
+      total.value = waves + ' waves × ' + v + ' = ' + waves * v + ' visits';
+    }
+    f.addEventListener('input', sync);
+    sync();
+    // Show the campaign picker or the site URL depending on where visitors start
+    function syncStart() {
+      var site = f.startAt.value === 'site';
+      document.querySelector('.js-qa-site').hidden = !site;
+      document.querySelector('.js-qa-campaign').hidden = site;
+    }
+    f.startAt.addEventListener('change', syncStart);
+    syncStart();
+  })();
+</script>
+<%- include('../partials/foot') %>

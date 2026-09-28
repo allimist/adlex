@@ -1,0 +1,60 @@
+<%- include('../partials/head', { title }) %>
+<% const key = exampleCampaign ? exampleCampaign.key : 'CAMPAIGNKEY'; %>
+<div class="page-head"><h1>Integration: add AdLex to a website</h1></div>
+<p class="muted">Three small scripts make any website (the bestoffers CMS or a new site) track with AdLex: the visitor gets a click id (<code>se</code>), product links carry it to the affiliate network, and brand clicks are reported as conversions. The scripts below already contain this AdLex's address: <code><%= baseUrl %></code>.</p>
+
+<div class="card">
+  <h2>How it works</h2>
+<pre class="small" style="max-height:none">Ad / campaign link ──▶ landing page
+                          │ script 1: keeps the landing params in cookies; gets the click id (se)
+                          │           – from ?se=… when the visitor came through an AdLex campaign link
+                          │           – otherwise from AdLex <%= baseUrl %>/se/
+                          │ script 2: fills {se} {clickId} … in the product links
+                          ▼
+visitor clicks a brand ──▶ script 3: "brandclick" conversion to AdLex ──▶ link opens the affiliate network
+                                                                                 │
+affiliate network ──▶ <%= baseUrl %>/postback?clickid={sub1}&amp;payout=…  ──▶ sale conversion ──▶ reports, postbacks, offline CSV</pre>
+</div>
+
+<div class="card">
+  <h2>1. Before you start (in AdLex)</h2>
+  <ol>
+    <li><strong>Traffic source</strong> — create one (<a href="/sources/new?preset=bing">Bing</a> or <a href="/sources/new?preset=website">Website</a> preset). Its parameter mapping decides which landing params are stored (t1…t20), e.g. <code>campaignid</code>, <code>keyword</code>. Set a <strong>postback token</strong> for the network's sale postbacks.</li>
+    <li><strong>Sites</strong> — add the website's domain (<a href="/sites">Sites</a>, currently <%= siteCount %>). AdLex only accepts <code>/se/</code> requests and brand clicks from listed domains.</li>
+    <li><strong>Campaign (optional)</strong> — to count a landing under an AdLex campaign, add <code>click=&lt;campaign key&gt;</code> to the ad's final URL, e.g. <code>https://yoursite.com/weightloss?click=<%= key %></code>. Without it the visit is a site click of the site's traffic source.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h2>2. Add the scripts to the website</h2>
+  <p class="muted">Paste all three into every page, in this order — script 1 in <code>&lt;head&gt;</code>, scripts 2 and 3 anywhere (end of <code>&lt;body&gt;</code> is fine). No library needed. For the bestoffers CMS these are the built-in tracking scripts, chosen in its admin (Tracking server = adlex).</p>
+  <% for (const s of snippets) { %>
+    <div class="page-head" style="margin-top:14px"><h2 style="margin:0"><%= s.label %></h2><button type="button" class="btn btn-sm js-copy" data-target="#snip-<%= s.id %>">Copy</button></div>
+    <pre class="small code-snippet" id="snip-<%= s.id %>"><%= s.code %></pre>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2>3. Product links on the site</h2>
+  <p>Put tokens where the affiliate network expects its sub ids, and <code>brand=</code> (plus optional <code>link_type=</code>) so script 3 knows it's a brand link:</p>
+  <pre class="small">https://network.example/offer/123?sub1={se}&amp;sub2={clickIdType}&amp;sub3={clickId}&amp;brand=trim&amp;link_type=cta</pre>
+  <p class="muted">Available tokens: <code>{se}</code> (AdLex click id — required, the network must send it back), <code>{clickId}</code> / <code>{clickIdType}</code> (gclid or msclkid and its type), <code>{page_url}</code>, and any landing param by name, e.g. <code>{campaignid}</code>, <code>{keyword}</code>, <code>{t1}</code>. Page builders that encode braces (<code>%7Bse%7D</code>) work too.</p>
+</div>
+
+<div class="card">
+  <h2>4. Sale postbacks from the affiliate network</h2>
+  <p>Give the network this postback URL, with its own macros in place of the placeholders (the <code>sub1</code> value is the click id):</p>
+  <pre class="small"><%= baseUrl %>/postback?clickid={sub1}&amp;payout={payout}&amp;status=sale&amp;txid={transaction_id}&amp;token=YOUR_SOURCE_TOKEN</pre>
+  <p class="muted">The db.bestoffers.biz form also works: <code><%= baseUrl %>/pc/?event_id={sub1}&amp;revenue={payout}&amp;brand=…&amp;event_name=…&amp;token=…</code>. Sales then appear under Conversions, fire your Triggers, and go into the offline CSV <a href="/exports">Exports</a> for Google / Microsoft Ads.</p>
+</div>
+
+<div class="card">
+  <h2>5. Check it works</h2>
+  <ol>
+    <li>Open a page with <code>?msclkid=TEST1</code> (or through a campaign link). The <a href="/clicklog">Clicklog</a> shows the click with its ad click id.</li>
+    <li>Click a product link — the <a href="/conversions">Conversions</a> page shows a <code>brandclick</code> row with the brand.</li>
+    <li>Load test with the <a href="/qa">QA page</a>: <em>Start at → Site URL</em> for these scripts.</li>
+  </ol>
+  <p class="muted">Nothing arrives? The domain is missing under Sites (AdLex answers 403), or the page is served from a different domain than the one listed.</p>
+</div>
+<%- include('../partials/foot') %>

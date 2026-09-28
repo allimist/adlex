@@ -5,6 +5,7 @@ import { HttpError } from '../lib/http.js';
 import { render, renderForm, buildCtx } from '../lib/macros.js';
 import { logger } from '../lib/logger.js';
 import { pageNewestFirst } from './clicks.js';
+import { T_KEYS } from '../lib/tparams.js';
 
 const col = () => getDb().collection('triggers');
 const logs = () => getDb().collection('postback_logs');
@@ -220,11 +221,7 @@ export async function testFire(trigger) {
     sourceId: trigger.sourceId,
     offerId: '',
     cost: 0.01,
-    sub1: 'sub1',
-    sub2: 'sub2',
-    sub3: 'sub3',
-    sub4: 'sub4',
-    sub5: 'sub5',
+    ...Object.fromEntries(T_KEYS.map((k) => [k, k])),
     ip: '127.0.0.1',
     country: 'US',
     ua: 'test',

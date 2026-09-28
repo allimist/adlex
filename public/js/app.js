@@ -39,7 +39,39 @@
     }
   });
 
-  // Source presets: <select class="js-preset" data-presets='{...}'> fills inputs named params[key][name|token]
+  // Source custom params t1…t20: rows past t5 are rendered hidden; "+ Add" reveals the next one, × clears and hides it.
+  var tEditor = document.querySelector('.js-tparams');
+  var syncTLimit = function () {};
+  if (tEditor) {
+    var hiddenRows = function () { return tEditor.querySelectorAll('.js-param-row[hidden]'); };
+    var addBtn = tEditor.querySelector('.js-add-tparam');
+    var limitHint = tEditor.querySelector('.js-tparam-limit');
+    syncTLimit = function () {
+      var full = hiddenRows().length === 0;
+      addBtn.hidden = full;
+      limitHint.hidden = !full;
+    };
+    tEditor.addEventListener('click', function (e) {
+      if (e.target.closest('.js-add-tparam')) {
+        var next = hiddenRows()[0];
+        if (next) {
+          next.hidden = false;
+          next.querySelector('input').focus();
+        }
+        syncTLimit();
+      }
+      var rm = e.target.closest('.js-remove-tparam');
+      if (rm) {
+        var row = rm.closest('.js-param-row');
+        row.querySelectorAll('input').forEach(function (i) { if (i.type === 'checkbox') i.checked = false; else i.value = ''; });
+        row.hidden = true;
+        syncTLimit();
+      }
+    });
+    syncTLimit();
+  }
+
+  // Source presets: <select class="js-preset" data-presets='{...}'> fills inputs named param_name_<key> / param_token_<key>
   var presetSel = document.querySelector('.js-preset');
   if (presetSel) {
     presetSel.addEventListener('change', function () {
@@ -47,14 +79,38 @@
       var p = presets[presetSel.value];
       if (!p) return;
       Object.keys(p.params).forEach(function (k) {
-        var n = document.querySelector('[name="params[' + k + '][name]"]');
-        var t = document.querySelector('[name="params[' + k + '][token]"]');
+        var n = document.querySelector('[name="param_name_' + k + '"]');
+        var t = document.querySelector('[name="param_token_' + k + '"]');
         if (n) n.value = p.params[k].name || '';
         if (t) t.value = p.params[k].token || '';
+        var h = document.querySelector('[name="param_hide_' + k + '"]');
+        if (h) h.checked = !!p.params[k].hideInUrl;
+        var row = n && n.closest('.js-param-row');
+        if (row) row.hidden = false;
       });
+      syncTLimit();
       var cm = document.querySelector('[name="costModel"]');
       if (cm && p.costModel) cm.value = p.costModel;
     });
+  }
+
+  // Export form: show the fields that apply to the chosen window type / platform
+  var winType = document.querySelector('.js-window-type');
+  if (winType) {
+    var syncWin = function () {
+      var monthly = winType.value === 'monthly';
+      document.querySelectorAll('.js-window-rolling').forEach(function (el) { el.hidden = monthly; });
+      document.querySelectorAll('.js-window-monthly').forEach(function (el) { el.hidden = !monthly; });
+    };
+    winType.addEventListener('change', syncWin);
+    syncWin();
+  }
+  var platformSel = document.querySelector('.js-export-platform');
+  var customBox = document.querySelector('.js-custom-columns');
+  if (platformSel && customBox) {
+    var syncPlatform = function () { customBox.hidden = platformSel.value !== 'custom'; };
+    platformSel.addEventListener('change', syncPlatform);
+    syncPlatform();
   }
 
   // Trigger form: show body fields only for POST
