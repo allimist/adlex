@@ -38,8 +38,8 @@ export async function pageNewestFirst(collection, { equals = {}, from, to, after
   return { rows: page, nextAfter: hasMore ? encodeCursor(page[page.length - 1]) : null };
 }
 
-export async function listClicks({ campaignId, converted, from, to, after }) {
-  const equals = { campaignId };
+export async function listClicks({ campaignId, siteId, converted, from, to, after }) {
+  const equals = { campaignId, siteId };
   if (converted === '1') equals.converted = true;
   if (converted === '0') equals.converted = false;
   return pageNewestFirst('clicks', { equals, from, to, after });

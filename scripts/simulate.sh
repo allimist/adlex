@@ -8,7 +8,7 @@ BASE=${BASE_URL:-http://localhost:8080}
 IDS=()
 for i in $(seq 1 "$N"); do
   LOC=$(curl -s -o /dev/null -w '%{redirect_url}' -H "X-Forwarded-For: 10.0.$((RANDOM%255)).$((RANDOM%255))" \
-    "$BASE/click/$KEY?clickid=EXT$RANDOM&cost=0.012&sub1=zone$((RANDOM%5))")
+    "$BASE/click/$KEY?clickid=EXT$RANDOM&cost=0.012&t1=zone$((RANDOM%5))")
   CID=$(echo "$LOC" | grep -oE '[0-9A-Z]{26}' | head -1)
   [ -n "$CID" ] && IDS+=("$CID")
 done

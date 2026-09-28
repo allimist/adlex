@@ -1,3 +1,5 @@
+import { T_KEYS, tValue } from './tparams.js';
+
 /** Macro rendering shared by offer URLs, campaign click URLs and outgoing postbacks. */
 export const MACRO_LIST = [
   ['clickid', 'Our click id (use this in offer URLs and postbacks to us)'],
@@ -14,11 +16,16 @@ export const MACRO_LIST = [
   ['status', 'Conversion status (lead, sale, rejected...)'],
   ['txid', 'Transaction id from the network postback'],
   ['conversion_id', 'Our conversion id'],
-  ['sub1', 'Sub id 1'],
-  ['sub2', 'Sub id 2'],
-  ['sub3', 'Sub id 3'],
-  ['sub4', 'Sub id 4'],
-  ['sub5', 'Sub id 5'],
+  ...T_KEYS.map((k) => [k, `Custom traffic source param ${k}`]),
+  ['gclid', 'Google click id (website clicks)'],
+  ['msclkid', 'Microsoft click id (website clicks)'],
+  ['fbclid', 'Facebook click id (website clicks)'],
+  ['ad_click_id', 'Ad platform click id, whichever type'],
+  ['ad_click_type', 'gclid | msclkid | fbclid | wbraid | gbraid'],
+  ['brand', 'Last brand clicked on the website'],
+  ['event_name', 'Event name from the postback (event_name param)'],
+  ['domain', 'Website domain'],
+  ['page_url', 'Website landing page'],
   ['ip', 'Visitor IP'],
   ['country', 'Visitor country (ISO-2, if known)'],
   ['ua', 'Visitor user agent'],
@@ -63,11 +70,6 @@ export function buildCtx({ click = {}, campaign = {}, offer = {}, source = {}, c
     status: conversion ? conversion.status || '' : '',
     txid: conversion ? conversion.txid || '' : '',
     conversion_id: conversion ? conversion.id || '' : '',
-    sub1: click.sub1 || '',
-    sub2: click.sub2 || '',
-    sub3: click.sub3 || '',
-    sub4: click.sub4 || '',
-    sub5: click.sub5 || '',
     ip: click.ip || '',
     country: click.country || '',
     ua: click.ua || '',
@@ -75,5 +77,19 @@ export function buildCtx({ click = {}, campaign = {}, offer = {}, source = {}, c
     timestamp: String(conversion ? conversion.createdAt || now : click.createdAt || now),
     date: new Date(conversion ? conversion.createdAt || now : click.createdAt || now).toISOString().slice(0, 10),
   };
+  for (const k of T_KEYS) ctx[k] = tValue(click, k);
+  const adType = click.adClickType || '';
+  const adId = click.adClickId || '';
+  ctx.ad_click_id = adId;
+  ctx.ad_click_type = adType;
+  ctx.gclid = adType === 'gclid' ? adId : '';
+  ctx.msclkid = adType === 'msclkid' ? adId : '';
+  ctx.fbclid = adType === 'fbclid' ? adId : '';
+  ctx.brand = (conversion && conversion.brand) || click.lastBrand || '';
+  ctx.event_name = (conversion && conversion.eventName) || '';
+  ctx.domain = click.domain || '';
+  ctx.page_url = click.pageUrl || '';
+  // Old templates may still say {sub1}…{sub5}; keep them working as aliases of t1…t5.
+  for (let i = 1; i <= 5; i++) ctx[`sub${i}`] = ctx[`t${i}`];
   return ctx;
 }

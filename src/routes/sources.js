@@ -4,11 +4,12 @@ import * as postbacks from '../services/postbacks.js';
 import * as reports from '../services/reports.js';
 import { parseRange } from '../lib/time.js';
 import { flash, HttpError } from '../lib/http.js';
+import { T_MAX, T_BASE_KEYS } from '../lib/tparams.js';
 
 export const sourcesRouter = Router();
 
 function formLocals(extra) {
-  return { costModels: sources.COST_MODELS, statuses: sources.STATUSES, paramKeys: sources.PARAM_KEYS, presets: sources.PRESETS, ...extra };
+  return { costModels: sources.COST_MODELS, statuses: sources.STATUSES, paramKeys: sources.PARAM_KEYS, fixedKeys: sources.FIXED_KEYS, tBaseKeys: T_BASE_KEYS, tMax: T_MAX, activeTKeys: sources.activeTKeys, presets: sources.PRESETS, ...extra };
 }
 
 sourcesRouter.get('/', async (req, res) => {

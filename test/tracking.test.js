@@ -25,13 +25,15 @@ test('pickOffer respects weights and status', () => {
 });
 
 test('readMappedParams uses source param names and defaults', () => {
-  const source = { params: { clickid: { name: 'cid', token: '' }, cost: { name: 'price', token: '' }, sub1: { name: 'zone', token: '' } } };
-  const q = { cid: 'X1', price: '0.02', zone: 'z9', sub2: 'two', clickid: 'ignored' };
+  const source = { params: { clickid: { name: 'cid', token: '' }, cost: { name: 'price', token: '' }, t1: { name: 'zone', token: '' } } };
+  const q = { cid: 'X1', price: '0.02', zone: 'z9', t2: 'two', t17: 'seventeen', clickid: 'ignored' };
   const m = readMappedParams(q, source);
   assert.equal(m.externalId, 'X1');
   assert.equal(m.costRaw, '0.02');
-  assert.equal(m.sub1, 'z9');
-  assert.equal(m.sub2, 'two'); // unmapped keys fall back to their own name
+  assert.equal(m.t.t1, 'z9');
+  assert.equal(m.t.t2, 'two'); // unmapped keys fall back to their own name
+  assert.equal(m.t.t17, 'seventeen'); // custom params up to t20
+  assert.equal(m.t.t3, undefined); // empty values are not stored
   assert.equal(readMappedParams({ clickid: ['a', 'b'] }, null).externalId, 'a');
 });
 

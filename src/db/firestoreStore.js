@@ -15,6 +15,11 @@
  *   conversions   (campaignId asc, offerId asc, createdAt desc)
  *   postback_logs (triggerId asc, createdAt desc)
  *   postback_logs (clickId asc, createdAt desc)
+ *   clicks        (siteId asc, createdAt desc)
+ *   clicks        (siteId asc, converted asc, createdAt desc)
+ *   export_logs   (exportId asc, createdAt desc)
+ *   exports       single-field index on token (default)
+ *   pending_conversions single-field index on state (default)
  *   sessions      TTL policy on expiresAt
  *
  * Scaling note: reports currently scan clicks/conversions in a date range. Past

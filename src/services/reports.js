@@ -1,6 +1,6 @@
 import { getDb } from '../db/index.js';
 import { toList } from '../db/adapter.js';
-import { REJECTED_STATUSES } from './conversions.js';
+import { REJECTED_STATUSES, BRANDCLICK_STATUS } from './conversions.js';
 
 export const GROUPS = [
   ['campaigns', 'Campaigns', 'campaignId'],
@@ -9,7 +9,7 @@ export const GROUPS = [
 ];
 
 function emptyRow(key) {
-  return { key, clicks: 0, uniques: 0, conversions: 0, revenue: 0, cost: 0, _ips: new Set() };
+  return { key, clicks: 0, uniques: 0, conversions: 0, brandClicks: 0, revenue: 0, cost: 0, _ips: new Set() };
 }
 
 function finish(r) {
@@ -60,6 +60,12 @@ export async function aggregate({ from, to, groupBy = 'campaignId', filter = {} 
   for (const v of conversions) {
     if (REJECTED_STATUSES.has(v.status)) continue;
     const r = row(v[groupBy] || '');
+    // Brand clicks from the website are their own conversion type: counted apart from sales.
+    if (v.status === BRANDCLICK_STATUS) {
+      r.brandClicks++;
+      total.brandClicks++;
+      continue;
+    }
     r.conversions++;
     total.conversions++;
     r.revenue += Number(v.payout) || 0;
